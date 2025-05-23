@@ -1,0 +1,28 @@
+{
+  "name": "evo-sim",
+  "version": "0.1.0",
+  "description": "Evolution simulation game",
+  "main": "dist/grid.js",
+  "scripts": {
+    "start": "tsc && node dist/grid.js",
+    "build": "tsc",
+    "watch": "tsc -w",
+    "serve": "tsc && live-server --port=8080"
+  },
+  "keywords": [
+    "evolution",
+    "simulation",
+    "p5js"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/p5": "^1.7.6",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "live-server": "^1.2.2"
+  },
+  "dependencies": {
+    "p5": "^1.9.0"
+  }
+}

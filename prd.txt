@@ -1,0 +1,28 @@
+This is en evolution sim game. It uses a grid system with pixel graphics to represent living creatures.
+
+Each creature, or rather kind of creature, is represented by a single pixe;
+
+The creatures are represented by a single pixel.
+
+The creatures can move around the grid.
+
+The creatures can eat other creatures.
+
+The creatures can reproduce.
+
+Creatures are generated deterministically based on a seed.
+
+The seed is a string of characters. This seed will control their behavior, whether they're carnivorous, herbivorous, or omnivorous. Nocturnal or diurnal. It controls which directions they can see, how far they can see, how fast they move and so on. There is also meta-data like how 'resilient' the seed is, dominant traits, recessive traits, and so on.
+
+The core 'engine' of the game will be the world simulation. We will create a world sim that will contain the grid, the creatures, and the rules that govern their behavior.
+
+The creatures and their interactions with the world will be considered as 'agents', and they will be managed and evolved by the 'evolution' engine.
+
+The 'evolution' engine will be responsible for taking creatures and introducing random evolutions over generations, or taking specific creatures and breeding them to create new creatures.
+
+So in summary:
+
+- The world sim will contain the grid, the world engine and the evolution agent. It will contain simple organic life (natural food like plants) and simple inorganic life (rocks, water, etc) a-la Dwarf-Fortress.
+- Creatures are generated deterministically based on a seed in most cases, but can be manually created by the user
+- Creatures can mutate over generations, or be manually mutated by the user
+- Creatures can be mated to produce new offspring

@@ -1,0 +1,11 @@
+# Task ID: 8
+# Title: Create Environment Generation System
+# Status: pending
+# Dependencies: 2, 5
+# Priority: medium
+# Description: Implement generation of environmental elements like plants, rocks, and water.
+# Details:
+Create systems for generating and distributing environmental elements across the grid. Implement growth and spread mechanics for plants. Add water flow/distribution logic. Create rock formations. Balance the distribution to create varied and interesting environments.
+
+# Test Strategy:
+Test environment generation with different parameters. Verify plant growth over time. Check for appropriate distribution of elements across the grid.

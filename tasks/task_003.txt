@@ -1,0 +1,11 @@
+# Task ID: 3
+# Title: Develop Seed-Based Creature Generation
+# Status: pending
+# Dependencies: 2
+# Priority: high
+# Description: Create the system for deterministically generating creatures based on a character seed.
+# Details:
+Implement a seed parser that converts a string of characters into creature attributes. Map specific characters or character positions to traits like diet type (carnivorous, herbivorous, omnivorous), activity cycle (nocturnal, diurnal), vision range and direction, movement speed, etc. Include metadata like trait dominance and resilience. Ensure the same seed always produces identical creatures.
+
+# Test Strategy:
+Test with various seeds to verify deterministic generation. Create test cases for each trait mapping and verify correct attribute assignment.

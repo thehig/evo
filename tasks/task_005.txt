@@ -1,0 +1,11 @@
+# Task ID: 5
+# Title: Create Basic World Simulation Loop
+# Status: pending
+# Dependencies: 1, 2
+# Priority: high
+# Description: Implement the core simulation loop that advances the world state over time.
+# Details:
+Create a simulation loop that updates the world state at regular intervals. Implement a time system (ticks/steps) for the simulation. Add functionality to start, pause, and reset the simulation. Ensure all entities can be updated each tick according to their behavior rules.
+
+# Test Strategy:
+Test simulation advancement through multiple ticks. Verify that entity states change appropriately over time. Test pause/resume/reset functionality.

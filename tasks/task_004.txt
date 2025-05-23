@@ -1,0 +1,11 @@
+# Task ID: 4
+# Title: Implement Creature Movement System
+# Status: pending
+# Dependencies: 3
+# Priority: high
+# Description: Enable creatures to move around the grid based on their movement attributes.
+# Details:
+Add movement capabilities to creatures based on their seed-derived movement speed. Implement different movement patterns (random, directed, etc.). Handle collision detection with grid boundaries and other entities. Movement should respect the grid's discrete nature, moving one cell at a time.
+
+# Test Strategy:
+Test movement in all directions, boundary collisions, and movement speeds. Verify that movement patterns match the expected behavior based on creature attributes.

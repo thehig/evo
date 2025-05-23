@@ -1,0 +1,11 @@
+# Task ID: 14
+# Title: Develop Simulation Statistics and Analytics
+# Status: pending
+# Dependencies: 5, 9
+# Priority: low
+# Description: Create a system to track and display statistics about the simulation.
+# Details:
+Implement tracking for population statistics (counts by species, diet types, etc.). Create graphs for population trends over time. Track evolution metrics like trait distribution changes. Display statistics about environmental factors like food availability and consumption rates.
+
+# Test Strategy:
+Test statistics collection over multiple simulation runs. Verify accuracy of counts and trends. Test with various initial conditions to ensure robust data collection.

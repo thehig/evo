@@ -1,0 +1,11 @@
+# Task ID: 9
+# Title: Implement Evolution Engine Core
+# Status: pending
+# Dependencies: 3, 7
+# Priority: high
+# Description: Create the core system for evolving creatures over generations.
+# Details:
+Implement the evolution engine that introduces mutations to creature seeds over generations. Create mutation rules that modify character seeds in meaningful ways. Implement selection pressure mechanics based on survival and reproduction success. Track lineage and generation numbers.
+
+# Test Strategy:
+Test mutation frequency and effects. Verify that selection pressures lead to appropriate adaptations over time. Test lineage tracking across multiple generations.
