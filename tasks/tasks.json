@@ -4,7 +4,7 @@
       "id": 1,
       "title": "Create Grid System Foundation",
       "description": "Implement the basic grid system that will serve as the environment for the evolution simulation.",
-      "status": "in-progress",
+      "status": "done",
       "dependencies": [],
       "priority": "high",
       "details": "Create a 2D grid data structure with configurable dimensions. Each cell should be able to hold a single entity (creature, plant, rock, water, etc.). Implement basic grid operations like getting/setting cell contents, checking boundaries, and rendering the grid as pixels. Use a simple color mapping for different entity types.",

@@ -1,6 +1,6 @@
 # Task ID: 1
 # Title: Create Grid System Foundation
-# Status: in-progress
+# Status: done
 # Dependencies: None
 # Priority: high
 # Description: Implement the basic grid system that will serve as the environment for the evolution simulation.
