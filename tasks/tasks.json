@@ -26,7 +26,7 @@
       "id": 3,
       "title": "Develop Seed-Based Creature Generation",
       "description": "Create the system for deterministically generating creatures based on a character seed.",
-      "status": "in-progress",
+      "status": "done",
       "dependencies": [
         2
       ],

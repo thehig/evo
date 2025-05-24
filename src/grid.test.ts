@@ -1,15 +1,22 @@
+import { describe, it, expect, beforeEach } from "@jest/globals"; // Added for Jest globals
 import { Grid, Rock, Plant, Creature, Entity, Water } from "./grid"; // Import from ./grid.ts
 
 describe("Grid", () => {
+  let grid: Grid;
+
+  beforeEach(() => {
+    grid = new Grid(3, 2); // Test with a 3x2 grid
+  });
+
   describe("constructor", () => {
-    it("should create a grid with the specified width and height", () => {
-      const grid = new Grid(10, 5);
-      expect(grid.width).toBe(10);
-      expect(grid.height).toBe(5);
+    it("should create a grid with specified width and height", () => {
+      expect(grid.width).toBe(3);
+      expect(grid.height).toBe(2);
+      expect(grid.cells.length).toBe(2); // height
+      expect(grid.cells[0].length).toBe(3); // width
     });
 
     it("should initialize all cells to null", () => {
-      const grid = new Grid(2, 2);
       for (let y = 0; y < grid.height; y++) {
         for (let x = 0; x < grid.width; x++) {
           expect(grid.getCell(x, y)).toBeNull();
@@ -18,65 +25,199 @@ describe("Grid", () => {
     });
   });
 
-  describe("setCell and getCell", () => {
-    it("should set and get an entity in a cell", () => {
-      const grid = new Grid(3, 3);
-      const rock = new Rock();
-      grid.setCell(1, 1, rock);
+  describe("addEntity and getCell", () => {
+    it("should add an entity to a valid cell and allow retrieval", () => {
+      const rock = new Rock(1, 1); // Pass initial (but will be overwritten by addEntity)
+      const result = grid.addEntity(rock, 1, 1);
+      expect(result).toBe(true);
       expect(grid.getCell(1, 1)).toBe(rock);
+      expect(rock.x).toBe(1);
+      expect(rock.y).toBe(1);
     });
 
-    it("should return null for empty cells after some cells are set", () => {
-      const grid = new Grid(3, 3);
-      grid.setCell(0, 0, new Plant());
+    it("should not add an entity to an out-of-bounds cell", () => {
+      const plant = new Plant();
+      expect(grid.addEntity(plant, 3, 0)).toBe(false); // x out of bounds
+      expect(grid.addEntity(plant, 0, 2)).toBe(false); // y out of bounds
+    });
+
+    it("should not add an entity to an already occupied cell", () => {
+      const rock1 = new Rock();
+      grid.addEntity(rock1, 0, 0);
+      const rock2 = new Rock();
+      expect(grid.addEntity(rock2, 0, 0)).toBe(false);
+      expect(grid.getCell(0, 0)).toBe(rock1); // Should still be rock1
+    });
+  });
+
+  describe("isValidPosition", () => {
+    beforeEach(() => {
+      grid = new Grid(5, 4); // Use a 5x4 grid for these tests
+    });
+
+    // Valid positions
+    it("should return true for positions within bounds", () => {
+      expect(grid.isValidPosition(0, 0)).toBe(true); // Top-left corner
+      expect(grid.isValidPosition(4, 3)).toBe(true); // Bottom-right corner
+      expect(grid.isValidPosition(2, 2)).toBe(true); // Middle
+    });
+
+    // Invalid positions
+    it("should return false for positions outside bounds", () => {
+      expect(grid.isValidPosition(5, 0)).toBe(false); // x too high
+      expect(grid.isValidPosition(0, 4)).toBe(false); // y too high
+      expect(grid.isValidPosition(-1, 0)).toBe(false); // x too low
+      expect(grid.isValidPosition(0, -1)).toBe(false); // y too low
+      expect(grid.isValidPosition(5, 4)).toBe(false); // x and y too high
+    });
+  });
+
+  describe("getEntities", () => {
+    it("should return an empty array if no entities are on the grid", () => {
+      expect(grid.getEntities()).toEqual([]);
+    });
+
+    it("should return all entities added to the grid", () => {
+      const plant = new Plant();
+      const creature = Creature.fromSeed("H1VD100", 1, 0); // Provide x,y for fromSeed
+      grid.addEntity(plant, 0, 0);
+      if (creature) grid.addEntity(creature, 1, 0);
+
+      const entities = grid.getEntities();
+      expect(entities.length).toBe(2);
+      expect(entities).toContain(plant);
+      if (creature) expect(entities).toContain(creature);
+    });
+  });
+
+  describe("removeEntity", () => {
+    it("should remove an entity from the grid and the entities list", () => {
+      const plant = new Plant();
+      grid.addEntity(plant, 0, 0);
+      expect(grid.getCell(0, 0)).toBe(plant);
+      expect(grid.getEntities()).toContain(plant);
+
+      const result = grid.removeEntity(plant);
+      expect(result).toBe(true);
+      expect(grid.getCell(0, 0)).toBeNull();
+      expect(grid.getEntities()).not.toContain(plant);
+      expect(grid.getEntities().length).toBe(0);
+    });
+
+    it("should return false if entity to remove is not found at its coordinates", () => {
+      const plant1 = new Plant(0, 0); // Entity knows its coords
+      grid.addEntity(plant1, 0, 0);
+
+      const plant2 = new Plant(0, 0); // Different instance at same coords conceptually
+      // but not actually on grid in this cell
+      // plant2 was never added, so grid.cells[0][0] is plant1.
+      // Trying to remove plant2 based on its own x,y should fail if grid.cells[y][x] !== entity
+      expect(grid.removeEntity(plant2)).toBe(false);
+      expect(grid.getCell(0, 0)).toBe(plant1); // plant1 should still be there
+    });
+
+    it("should return false if trying to remove from invalid coordinates (e.g., entity moved off grid)", () => {
+      const plant = new Plant(0, 0);
+      grid.addEntity(plant, 0, 0);
+      plant.x = -1; // Simulate entity's coordinates becoming invalid without grid update
+      plant.y = -1;
+      expect(grid.removeEntity(plant)).toBe(false);
+      expect(grid.getCell(0, 0)).toBe(plant); // Still on grid because remove failed
+    });
+  });
+
+  describe("moveEntity", () => {
+    let creature: Creature;
+
+    beforeEach(() => {
+      grid = new Grid(3, 3);
+      creature = Creature.fromSeed("C1VD100", 1, 1) as Creature;
+      if (creature) {
+        grid.addEntity(creature, 1, 1);
+      }
+    });
+
+    it("should move an entity to a valid empty cell", () => {
+      const result = grid.moveEntity(creature, 1, 0); // Move North
+      expect(result).toBe(true);
       expect(grid.getCell(1, 1)).toBeNull();
+      expect(grid.getCell(1, 0)).toBe(creature);
+      expect(creature.x).toBe(1);
+      expect(creature.y).toBe(0);
     });
 
-    it("should throw an error when setting a cell out of bounds", () => {
-      const grid = new Grid(3, 3);
+    it("should not move an entity out of bounds", () => {
+      const result = grid.moveEntity(creature, 1, -1); // Try moving North off grid
+      expect(result).toBe(false);
+      expect(grid.getCell(1, 1)).toBe(creature); // Still at original position
+      expect(creature.x).toBe(1);
+      expect(creature.y).toBe(1);
+    });
+
+    it("should not move an entity into a cell occupied by a Rock", () => {
       const rock = new Rock();
-      expect(() => grid.setCell(3, 0, rock)).toThrow(RangeError);
-      expect(() => grid.setCell(0, 3, rock)).toThrow(RangeError);
-      expect(() => grid.setCell(-1, 0, rock)).toThrow(RangeError);
-      expect(() => grid.setCell(0, -1, rock)).toThrow(RangeError);
+      grid.addEntity(rock, 1, 0);
+      const result = grid.moveEntity(creature, 1, 0); // Try moving North into Rock
+      expect(result).toBe(false);
+      expect(grid.getCell(1, 1)).toBe(creature);
+      expect(grid.getCell(1, 0)).toBe(rock);
     });
 
-    it("should throw an error when getting a cell out of bounds", () => {
-      const grid = new Grid(3, 3);
-      expect(() => grid.getCell(3, 0)).toThrow(RangeError);
-      expect(() => grid.getCell(0, 3)).toThrow(RangeError);
-      expect(() => grid.getCell(-1, 0)).toThrow(RangeError);
-      expect(() => grid.getCell(0, -1)).toThrow(RangeError);
+    it("should allow moving an entity into a cell occupied by a Plant", () => {
+      const plant = new Plant();
+      grid.addEntity(plant, 1, 0); // Plant is North
+      const result = grid.moveEntity(creature, 1, 0); // Move North into Plant
+      expect(result).toBe(true);
+      expect(grid.getCell(1, 1)).toBeNull(); // Old position is empty
+      expect(grid.getCell(1, 0)).toBe(creature); // Creature is now at plant's location
+      // (interaction, like eating, is for another task)
+      expect(creature.x).toBe(1);
+      expect(creature.y).toBe(0);
+    });
+
+    it("should not move an entity into a cell occupied by another Creature (for now)", () => {
+      const otherCreature = Creature.fromSeed("H1VD100", 1, 0) as Creature;
+      grid.addEntity(otherCreature, 1, 0);
+
+      const result = grid.moveEntity(creature, 1, 0); // Try moving North into other creature
+      expect(result).toBe(false);
+      expect(grid.getCell(1, 1)).toBe(creature); // Original creature still there
+      expect(grid.getCell(1, 0)).toBe(otherCreature); // Other creature still there
+    });
+
+    it("should correctly update entity's internal x, y coordinates upon successful move", () => {
+      grid.moveEntity(creature, 0, 1); // Move West
+      expect(creature.x).toBe(0);
+      expect(creature.y).toBe(1);
+    });
+
+    it("should clear the old cell after a successful move", () => {
+      grid.moveEntity(creature, 0, 1); // Move West
+      expect(grid.getCell(1, 1)).toBeNull(); // Original position should be empty
     });
   });
 
-  describe("isWithinBounds", () => {
-    const grid = new Grid(5, 4);
-    it("should return true for coordinates within bounds", () => {
-      expect(grid.isWithinBounds(0, 0)).toBe(true);
-      expect(grid.isWithinBounds(4, 3)).toBe(true);
-      expect(grid.isWithinBounds(2, 2)).toBe(true);
+  describe("getCreatures", () => {
+    it("should return an empty array if no creatures are on the grid", () => {
+      grid.addEntity(new Plant(), 0, 0);
+      grid.addEntity(new Rock(), 1, 0);
+      expect(grid.getCreatures()).toEqual([]);
     });
 
-    it("should return false for coordinates out of bounds", () => {
-      expect(grid.isWithinBounds(5, 0)).toBe(false); // x too high
-      expect(grid.isWithinBounds(0, 4)).toBe(false); // y too high
-      expect(grid.isWithinBounds(-1, 0)).toBe(false); // x too low
-      expect(grid.isWithinBounds(0, -1)).toBe(false); // y too low
-      expect(grid.isWithinBounds(5, 4)).toBe(false); // x and y too high
-    });
-  });
+    it("should return only Creature instances", () => {
+      const c1 = Creature.fromSeed("C1VD100", 0, 0) as Creature;
+      const c2 = Creature.fromSeed("H2SN200", 1, 0) as Creature;
+      grid.addEntity(c1, 0, 0);
+      grid.addEntity(new Plant(), 0, 1);
+      grid.addEntity(c2, 1, 0);
+      grid.addEntity(new Rock(), 1, 1);
 
-  // Example test for a Creature related method if it existed on Grid, or for Entity properties
-  // For now, we just ensure entities can be placed.
-  it("should allow placing different types of entities", () => {
-    const grid = new Grid(2, 1);
-    const plant = new Plant();
-    const creature = new Creature("C");
-    grid.setCell(0, 0, plant);
-    grid.setCell(1, 0, creature);
-    expect(grid.getCell(0, 0)).toBeInstanceOf(Plant);
-    expect(grid.getCell(1, 0)).toBeInstanceOf(Creature);
+      const creatures = grid.getCreatures();
+      expect(creatures.length).toBe(2);
+      expect(creatures).toContain(c1);
+      expect(creatures).toContain(c2);
+      expect(creatures.every((c) => c instanceof Creature)).toBe(true);
+    });
   });
 });
 

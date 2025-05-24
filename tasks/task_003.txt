@@ -1,6 +1,6 @@
 # Task ID: 3
 # Title: Develop Seed-Based Creature Generation
-# Status: in-progress
+# Status: done
 # Dependencies: 2
 # Priority: high
 # Description: Create the system for deterministically generating creatures based on a character seed.

@@ -288,7 +288,7 @@ describe("Creature.fromSeed", () => {
   });
 
   it("should use provided defaultSymbol and defaultColor with a 7-char seed", () => {
-    const creature = Creature.fromSeed("H1VD000", "S", "#123456");
+    const creature = Creature.fromSeed("H1VD000", -1, -1, "S", "#123456");
     expect(creature).not.toBeNull();
     expect(creature?.symbol).toBe("S");
     expect(creature?.color).toBe("#123456");
