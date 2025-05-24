@@ -18,6 +18,28 @@ import {
   PerceptionType,
 } from "./grid";
 
+// Extend the NodeJS.Global interface to include browser-specific animation methods
+declare global {
+  namespace NodeJS {
+    interface Global {
+      requestAnimationFrame: (callback: FrameRequestCallback) => number;
+      cancelAnimationFrame: (id: number) => void;
+    }
+  }
+}
+
+// Simple polyfill for requestAnimationFrame and cancelAnimationFrame for Node.js environment
+if (typeof global.requestAnimationFrame === "undefined") {
+  global.requestAnimationFrame = (callback: FrameRequestCallback): number => {
+    return Date.now(); // Return a dummy ID, spy will override behavior
+  };
+}
+if (typeof global.cancelAnimationFrame === "undefined") {
+  global.cancelAnimationFrame = (id: number): void => {
+    // Dummy implementation, spy will override behavior
+  };
+}
+
 // Mocks
 jest.mock("./grid", () => {
   const actualGridModule = jest.requireActual<typeof GridModuleType>("./grid");
@@ -48,37 +70,19 @@ const mockRenderer: jest.Mocked<IRenderer> = {
   render: jest.fn(),
 };
 
-// Mock console.error to prevent log spamming
+// Mock console.error and console.log to prevent log spamming
 let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
-let consoleLogSpy: jest.SpiedFunction<typeof console.log>; // Added for console.log
+let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
 
 describe("Simulation", () => {
   let mockGridInstance: jest.Mocked<Grid>;
   let simulation: Simulation;
-  // Let TypeScript infer spy types from jest.spyOn
   let requestAnimationFrameSpy: ReturnType<typeof jest.spyOn>;
   let cancelAnimationFrameSpy: ReturnType<typeof jest.spyOn>;
   let animationFrameCallbackStorage: FrameRequestCallback | null = null;
 
   beforeEach(() => {
-    // Polyfill for requestAnimationFrame and cancelAnimationFrame in Node.js environment
-    if (typeof global.requestAnimationFrame === "undefined") {
-      (global as any).requestAnimationFrame = (
-        callback: FrameRequestCallback
-      ): number => {
-        // Simple immediate execution or timeout based for testing
-        animationFrameCallbackStorage = callback; // Store it if needed for manual triggering
-        return setTimeout(
-          () => callback(performance.now()),
-          0
-        ) as unknown as number;
-      };
-    }
-    if (typeof global.cancelAnimationFrame === "undefined") {
-      (global as any).cancelAnimationFrame = (id: number): void => {
-        clearTimeout(id);
-      };
-    }
+    animationFrameCallbackStorage = null;
 
     const actualGridModule =
       jest.requireActual<typeof GridModuleType>("./grid");
@@ -102,24 +106,28 @@ describe("Simulation", () => {
       .spyOn(global, "requestAnimationFrame")
       .mockImplementation((cb: FrameRequestCallback) => {
         animationFrameCallbackStorage = cb;
-        return 1 as any; // Return a number that acts as a request ID
+        return 1;
       });
+
     cancelAnimationFrameSpy = jest
       .spyOn(global, "cancelAnimationFrame")
-      .mockImplementation(jest.fn());
+      .mockImplementation((id: number) => {
+        if (id === 1 && animationFrameCallbackStorage) {
+          animationFrameCallbackStorage = null;
+        }
+      });
 
     consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
-    consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {}); // Mock console.log
+    consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
   });
 
   afterEach(() => {
     simulation.pause();
-    // Ensure spies are restored only if they were created
-    if (requestAnimationFrameSpy) requestAnimationFrameSpy.mockRestore();
-    if (cancelAnimationFrameSpy) cancelAnimationFrameSpy.mockRestore();
+    requestAnimationFrameSpy.mockRestore();
+    cancelAnimationFrameSpy.mockRestore();
     animationFrameCallbackStorage = null;
     if (consoleErrorSpy) consoleErrorSpy.mockRestore();
-    if (consoleLogSpy) consoleLogSpy.mockRestore(); // Restore console.log
+    if (consoleLogSpy) consoleLogSpy.mockRestore();
   });
 
   it("should initialize with tickCount 0 and not running", () => {
@@ -184,7 +192,6 @@ describe("Simulation", () => {
     beforeEach(() => {
       const actualGridModule =
         jest.requireActual<typeof GridModuleType>("./grid");
-      // Create actual creature instances, then mock their methods
       mockCreature1 = new actualGridModule.Creature(
         "C1",
         "#111111",
@@ -209,15 +216,17 @@ describe("Simulation", () => {
         mockCreature1,
         mockCreature2,
       ]);
+      // Clear mocks that might be called by simulation.start() -> step()
+      (mockGridInstance.getCreatures as jest.Mock).mockClear();
+      (mockGridInstance.moveEntity as jest.Mock).mockClear();
+      (mockRenderer.render as jest.Mock).mockClear();
+      // Note: mockCreature1.getNextMove and mockCreature2.getNextMove are fresh from instantiation here.
     });
 
     it("should increment tickCount, process creatures, and render on each step", () => {
-      simulation.start();
-      expect(simulation.getTickCount()).toBe(0);
+      simulation.start(); // Assumes this performs the first step (tickCount: 0 -> 1)
 
-      if (animationFrameCallbackStorage)
-        animationFrameCallbackStorage(performance.now());
-
+      // Assertions for the state *after* start() has run the first step
       expect(simulation.getTickCount()).toBe(1);
       expect(mockGridInstance.getCreatures).toHaveBeenCalledTimes(1);
       expect(mockCreature1.getNextMove).toHaveBeenCalledTimes(1);
@@ -227,29 +236,73 @@ describe("Simulation", () => {
         1,
         1
       );
-      expect(mockGridInstance.moveEntity).toHaveBeenCalledTimes(1);
+      expect(mockGridInstance.moveEntity).toHaveBeenCalledTimes(1); // Creature1 moves
       expect(mockRenderer.render).toHaveBeenCalledWith(mockGridInstance);
       expect(mockRenderer.render).toHaveBeenCalledTimes(1);
 
+      // Manually trigger the *second* step (tickCount: 1 -> 2)
       if (animationFrameCallbackStorage)
         animationFrameCallbackStorage(performance.now());
+
       expect(simulation.getTickCount()).toBe(2);
       expect(mockGridInstance.getCreatures).toHaveBeenCalledTimes(2);
+      expect(mockCreature1.getNextMove).toHaveBeenCalledTimes(2);
+      expect(mockCreature2.getNextMove).toHaveBeenCalledTimes(2);
+      expect(mockGridInstance.moveEntity).toHaveBeenCalledWith(
+        mockCreature1,
+        1,
+        1
+      ); // Creature1 moves again
+      expect(mockGridInstance.moveEntity).toHaveBeenCalledTimes(2); // Total calls to moveEntity
+      expect(mockRenderer.render).toHaveBeenCalledWith(mockGridInstance);
       expect(mockRenderer.render).toHaveBeenCalledTimes(2);
+
+      // Manually trigger the *third* step (tickCount: 2 -> 3)
+      if (animationFrameCallbackStorage)
+        animationFrameCallbackStorage(performance.now());
+      expect(simulation.getTickCount()).toBe(3);
+      expect(mockGridInstance.getCreatures).toHaveBeenCalledTimes(3);
+      expect(mockRenderer.render).toHaveBeenCalledTimes(3);
     });
 
     it("should not process steps if paused", () => {
-      simulation.start();
+      // Clear mocks before start, as start will call them once.
+      (mockGridInstance.getCreatures as jest.Mock).mockClear();
+      (mockRenderer.render as jest.Mock).mockClear();
+      mockCreature1.getNextMove.mockClear();
+      mockCreature2.getNextMove.mockClear();
+      (mockGridInstance.moveEntity as jest.Mock).mockClear();
+
+      simulation.start(); // tickCount becomes 1, first step processed. Mocks called once.
+
+      // Store the call counts *after* start() has completed its synchronous step.
+      const creatureCallsAfterStart = (
+        mockGridInstance.getCreatures as jest.Mock
+      ).mock.calls.length;
+      const renderCallsAfterStart = (mockRenderer.render as jest.Mock).mock
+        .calls.length;
+      const moveCallsAfterStart = (mockGridInstance.moveEntity as jest.Mock)
+        .mock.calls.length;
+      const c1NextMoveCallsAfterStart =
+        mockCreature1.getNextMove.mock.calls.length;
+
       simulation.pause();
 
+      // Attempt to trigger animation frame callback (should not execute step logic if paused)
       if (animationFrameCallbackStorage)
         animationFrameCallbackStorage(performance.now());
 
-      expect(simulation.getTickCount()).toBe(0);
-      expect(mockGridInstance.getCreatures).not.toHaveBeenCalled();
-      // Renderer might have been called by reset() or initial setup, so check based on interaction count if needed
-      // For this test, assuming mockRenderer.render.mockClear() in beforeEach is sufficient.
-      expect(mockRenderer.render).not.toHaveBeenCalled();
+      expect(simulation.getTickCount()).toBe(1); // Tick count should remain 1 (from start)
+      expect(mockGridInstance.getCreatures).toHaveBeenCalledTimes(
+        creatureCallsAfterStart
+      );
+      expect(mockRenderer.render).toHaveBeenCalledTimes(renderCallsAfterStart);
+      expect(mockGridInstance.moveEntity).toHaveBeenCalledTimes(
+        moveCallsAfterStart
+      );
+      expect(mockCreature1.getNextMove).toHaveBeenCalledTimes(
+        c1NextMoveCallsAfterStart
+      );
     });
   });
 });
