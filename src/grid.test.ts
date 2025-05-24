@@ -1,12 +1,31 @@
-import { describe, it, expect, beforeEach } from "@jest/globals"; // Added for Jest globals
+import {
+  jest,
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+} from "@jest/globals"; // Added for Jest globals
 import { Grid, Rock, Plant, Creature, Entity, Water } from "./grid"; // Import from ./grid.ts
 
-describe("Grid", () => {
-  let grid: Grid;
+// Mock console.error to prevent log spamming
+let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
+let consoleLogSpy: jest.SpiedFunction<typeof console.log>; // Added for console.log
+let grid: Grid; // Declare grid here
 
-  beforeEach(() => {
-    grid = new Grid(3, 2); // Test with a 3x2 grid
-  });
+beforeEach(() => {
+  grid = new Grid(3, 2); // Test with a 3x2 grid
+  consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+  consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {}); // Mock console.log
+});
+
+afterEach(() => {
+  consoleErrorSpy.mockRestore();
+  consoleLogSpy.mockRestore(); // Restore console.log
+});
+
+describe("Grid", () => {
+  //let grid: Grid; // Remove this line
 
   describe("constructor", () => {
     it("should create a grid with specified width and height", () => {

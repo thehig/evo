@@ -1,6 +1,27 @@
-import { describe, it, expect } from "@jest/globals";
+import {
+  jest,
+  describe,
+  beforeEach,
+  afterEach,
+  expect,
+  it,
+} from "@jest/globals";
 import { parseSeed, CreatureAttributes } from "./seedParser";
 import { Creature, DietType, ActivityCycle, PerceptionType } from "./grid";
+
+// Mock console.error to prevent log spamming
+let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
+let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
+
+beforeEach(() => {
+  consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+  consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+});
+
+afterEach(() => {
+  consoleErrorSpy.mockRestore();
+  consoleLogSpy.mockRestore();
+});
 
 describe("parseSeed", () => {
   it("should correctly parse a valid 7-char seed for Herbivore, Diurnal", () => {

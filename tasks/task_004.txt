@@ -1,6 +1,6 @@
 # Task ID: 4
 # Title: Implement Creature Movement System
-# Status: pending
+# Status: done
 # Dependencies: 3
 # Priority: high
 # Description: Enable creatures to move around the grid based on their movement attributes.

@@ -38,7 +38,7 @@
       "id": 4,
       "title": "Implement Creature Movement System",
       "description": "Enable creatures to move around the grid based on their movement attributes.",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         3
       ],
