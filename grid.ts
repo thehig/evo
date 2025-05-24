@@ -100,31 +100,35 @@ class ConsoleRenderer implements IRenderer {
   }
 }
 
-// Example Usage (modified)
-const grid = new Grid(10, 5);
-grid.setCell(0, 0, new Rock());
-grid.setCell(1, 1, new Plant());
-grid.setCell(9, 4, new Creature("X", "#FFA500")); // Orange creature
-grid.setCell(2, 2, new Water());
+// The example usage block below was causing the 10x5 grid to be printed to the console
+// when grid.ts was imported by main.ts. It should be removed or commented out.
 
-console.log(`Cell (0,0): ${grid.getCell(0, 0)}`);
-console.log(`Cell (1,0): ${grid.getCell(1, 0)}`);
-console.log(`Is (5,5) within bounds? ${grid.isWithinBounds(5, 5)}`);
-console.log(`Is (10,5) within bounds? ${grid.isWithinBounds(10, 5)}`);
+/* 
+// Example Usage - THIS BLOCK IS NOW COMMENTED OUT
+const grid_example = new Grid(10, 5); // Renamed to avoid conflict if not fully removed
+grid_example.setCell(0, 0, new Rock());
+grid_example.setCell(1, 1, new Plant());
+grid_example.setCell(9, 4, new Creature('X', '#FFA500'));
+grid_example.setCell(2, 2, new Water());
+
+console.log(`Cell (0,0): ${grid_example.getCell(0,0)}`);
+console.log(`Cell (1,0): ${grid_example.getCell(1,0)}`); 
+console.log(`Is (5,5) within bounds? ${grid_example.isWithinBounds(5,5)}`);
+console.log(`Is (10,5) within bounds? ${grid_example.isWithinBounds(10,5)}`);
 
 try {
-  grid.setCell(10, 0, new Rock());
+    grid_example.setCell(10, 0, new Rock());
 } catch (e: any) {
-  if (e instanceof RangeError) {
-    console.error(e.message);
-  } else {
-    console.error("An unexpected error occurred", e);
-  }
+    if (e instanceof RangeError) {
+        console.error(e.message);
+    } else {
+        console.error("An unexpected error occurred in example block", e);
+    }
 }
 
-// Using the ConsoleRenderer
-const consoleRenderer = new ConsoleRenderer();
-consoleRenderer.render(grid);
+const consoleRenderer_example = new ConsoleRenderer();
+consoleRenderer_example.render(grid_example);
+*/
 
 class P5CanvasRenderer implements IRenderer {
   private p5Instance: any; // Changed from p5 to any
@@ -208,4 +212,4 @@ export {
   IRenderer,
   ConsoleRenderer,
   P5CanvasRenderer,
-}; // Added P5CanvasRenderer
+};

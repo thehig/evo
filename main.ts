@@ -5,6 +5,7 @@ import {
   Water,
   Creature,
   P5CanvasRenderer,
+  ConsoleRenderer,
 } from "./grid.js"; // Note .js extension for browser ES modules
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -40,6 +41,17 @@ document.addEventListener("DOMContentLoaded", () => {
     p5Renderer.setCellSize(cellSize);
     p5Renderer.render(gameGrid); // Assign the grid to the renderer
     console.log("P5CanvasRenderer initialized and grid assigned.");
+
+    // Now, also render to console within a group
+    console.group("Grid Renders");
+
+    // P5.js render is visual on page, log that it happened.
+    console.log("P5.js canvas render initiated.");
+
+    const consoleRenderer = new ConsoleRenderer();
+    consoleRenderer.render(gameGrid);
+
+    console.groupEnd();
   } catch (error) {
     console.error("Failed to initialize P5CanvasRenderer:", error);
     const container = document.getElementById("canvas-container");
