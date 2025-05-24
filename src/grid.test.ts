@@ -82,16 +82,24 @@ describe("Grid", () => {
 
 describe("Entity and Subclasses", () => {
   describe("Entity", () => {
-    it("should create an entity with a symbol and default color", () => {
+    it("should create an entity with a symbol, default color, and default type", () => {
       const entity = new Entity("E");
       expect(entity.symbol).toBe("E");
       expect(entity.color).toBe("#FFFFFF"); // Default color white
+      expect(entity.type).toBe("Entity"); // Check default type
     });
 
     it("should create an entity with a symbol and specified color", () => {
       const entity = new Entity("E", "#FF0000");
       expect(entity.symbol).toBe("E");
       expect(entity.color).toBe("#FF0000");
+    });
+
+    it("should create an entity with specified symbol, color, and type", () => {
+      const entity = new Entity("E", "#FF0000", "CustomType");
+      expect(entity.symbol).toBe("E");
+      expect(entity.color).toBe("#FF0000");
+      expect(entity.type).toBe("CustomType"); // Check custom type
     });
 
     it("toString() should return the symbol", () => {
@@ -101,46 +109,52 @@ describe("Entity and Subclasses", () => {
   });
 
   describe("Plant", () => {
-    it("should have correct symbol and color", () => {
+    it("should have correct symbol, color, and type", () => {
       const plant = new Plant();
       expect(plant.symbol).toBe("P");
       expect(plant.color).toBe("#00FF00"); // Green
+      expect(plant.type).toBe("Plant"); // Check type
     });
   });
 
   describe("Rock", () => {
-    it("should have correct symbol and color", () => {
+    it("should have correct symbol, color, and type", () => {
       const rock = new Rock();
       expect(rock.symbol).toBe("R");
       expect(rock.color).toBe("#808080"); // Grey
+      expect(rock.type).toBe("Rock"); // Check type
     });
   });
 
   describe("Water", () => {
-    it("should have correct symbol and color", () => {
+    it("should have correct symbol, color, and type", () => {
       const water = new Water();
       expect(water.symbol).toBe("W");
       expect(water.color).toBe("#0000FF"); // Blue
+      expect(water.type).toBe("Water"); // Check type
     });
   });
 
   describe("Creature", () => {
-    it("should create a creature with default symbol and color", () => {
+    it("should create a creature with default symbol, color, and type", () => {
       const creature = new Creature();
       expect(creature.symbol).toBe("C");
       expect(creature.color).toBe("#FF0000"); // Default Red
+      expect(creature.type).toBe("Creature"); // Check default type
     });
 
-    it("should create a creature with a specified symbol and default color", () => {
+    it("should create a creature with a specified symbol, default color, and default type", () => {
       const creature = new Creature("X");
       expect(creature.symbol).toBe("X");
       expect(creature.color).toBe("#FF0000"); // Default Red (as color not specified)
+      expect(creature.type).toBe("Creature"); // Check default type
     });
 
-    it("should create a creature with a specified symbol and color", () => {
-      const creature = new Creature("Y", "#00FFFF");
+    it("should create a creature with a specified symbol, color, and type", () => {
+      const creature = new Creature("Y", "#00FFFF", "SpecialCreature");
       expect(creature.symbol).toBe("Y");
       expect(creature.color).toBe("#00FFFF"); // Cyan
+      expect(creature.type).toBe("SpecialCreature"); // Check custom type
     });
   });
 });

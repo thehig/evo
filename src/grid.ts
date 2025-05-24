@@ -3,11 +3,16 @@
 interface IEntity {
   symbol: string;
   color?: string; // Optional: for canvas rendering
+  type: string; // Added type property
   toString(): string;
 }
 
 class Entity implements IEntity {
-  constructor(public symbol: string, public color: string = "#FFFFFF") {} // Default color white
+  constructor(
+    public symbol: string,
+    public color: string = "#FFFFFF",
+    public type: string = "Entity"
+  ) {} // Default color white
 
   toString(): string {
     return this.symbol;
@@ -16,26 +21,104 @@ class Entity implements IEntity {
 
 class Plant extends Entity {
   constructor() {
-    super("P", "#00FF00"); // Green
+    super("P", "#00FF00", "Plant"); // Green
   }
 }
 
 class Rock extends Entity {
   constructor() {
-    super("R", "#808080"); // Grey
+    super("R", "#808080", "Rock"); // Grey
   }
 }
 
 class Water extends Entity {
   constructor() {
-    super("W", "#0000FF"); // Blue
+    super("W", "#0000FF", "Water"); // Blue
   }
 }
 
+export enum DietType {
+  HERBIVORE = "Herbivore",
+  CARNIVORE = "Carnivore",
+  OMNIVORE = "Omnivore",
+  UNKNOWN = "Unknown", // Default or for non-creatures/error states
+}
+
+import { parseSeed, CreatureAttributes } from "./seedParser"; // Import parser
+
 class Creature extends Entity {
-  constructor(symbol: string = "C", color: string = "#FF0000") {
-    // Default Red for generic creature
-    super(symbol, color);
+  public dietType: DietType;
+  public movementSpeed: number;
+  public visionRange: number;
+
+  constructor(
+    symbol: string = "C",
+    color: string = "#FF0000",
+    type: string = "Creature",
+    dietType: DietType = DietType.UNKNOWN,
+    movementSpeed: number = 1, // Default speed 1
+    visionRange: number = 1 // Default vision 1
+  ) {
+    super(symbol, color, type);
+    this.dietType = dietType;
+    this.movementSpeed = movementSpeed;
+    this.visionRange = visionRange;
+  }
+
+  static fromSeed(
+    seed: string,
+    defaultSymbol?: string,
+    defaultColor?: string
+  ): Creature | null {
+    const attributes = parseSeed(seed);
+    if (!attributes) {
+      return null; // Seed parsing failed (e.g., seed too short)
+    }
+
+    // Determine symbol: use first letter of diet type, or provided default, or 'C'
+    let symbolToUse = defaultSymbol;
+    if (!symbolToUse) {
+      switch (attributes.dietType) {
+        case DietType.HERBIVORE:
+          symbolToUse = "H";
+          break;
+        case DietType.CARNIVORE:
+          symbolToUse = "C";
+          break; // Note: 'C' is also default generic Creature
+        case DietType.OMNIVORE:
+          symbolToUse = "O";
+          break;
+        default:
+          symbolToUse = "Z"; // For UNKNOWN diet, use Z or some other indicator
+      }
+    }
+
+    // Determine color: map from diet type, or use provided default, or Creature default red
+    let colorToUse = defaultColor;
+    if (!colorToUse) {
+      switch (attributes.dietType) {
+        case DietType.HERBIVORE:
+          colorToUse = "#22DD22";
+          break; // Slightly different green
+        case DietType.CARNIVORE:
+          colorToUse = "#DD2222";
+          break; // Slightly different red
+        case DietType.OMNIVORE:
+          colorToUse = "#DADA22";
+          break; // Slightly different yellow
+        default:
+          colorToUse = "#CCCCCC"; // Grey for UNKNOWN diet type
+      }
+    }
+
+    return new Creature(
+      symbolToUse,
+      colorToUse,
+      "Creature", // type
+      attributes.dietType,
+      attributes.movementSpeed,
+      attributes.visionRange
+    );
   }
 }
 

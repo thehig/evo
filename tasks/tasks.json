@@ -14,7 +14,7 @@
       "id": 2,
       "title": "Implement Basic Entity System",
       "description": "Create the foundational entity system for all objects that can exist in the grid world.",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         1
       ],
@@ -26,7 +26,7 @@
       "id": 3,
       "title": "Develop Seed-Based Creature Generation",
       "description": "Create the system for deterministically generating creatures based on a character seed.",
-      "status": "pending",
+      "status": "in-progress",
       "dependencies": [
         2
       ],

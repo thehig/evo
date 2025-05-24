@@ -1,6 +1,6 @@
 # Task ID: 2
 # Title: Implement Basic Entity System
-# Status: pending
+# Status: done
 # Dependencies: 1
 # Priority: high
 # Description: Create the foundational entity system for all objects that can exist in the grid world.
