@@ -1,9 +1,29 @@
 /// <reference types="p5" />
 
+export enum DietType {
+  HERBIVORE = "Herbivore",
+  CARNIVORE = "Carnivore",
+  OMNIVORE = "Omnivore",
+  UNKNOWN = "Unknown",
+}
+
+export enum ActivityCycle {
+  NOCTURNAL = "Nocturnal",
+  DIURNAL = "Diurnal",
+  NONE = "None",
+}
+
+export enum PerceptionType {
+  VISION = "Vision",
+  SCENT = "Scent",
+  HEARING = "Hearing",
+  NONE = "None", // Default or for non-creatures
+}
+
 interface IEntity {
   symbol: string;
-  color?: string; // Optional: for canvas rendering
-  type: string; // Added type property
+  color?: string;
+  type: string;
   toString(): string;
 }
 
@@ -12,7 +32,7 @@ class Entity implements IEntity {
     public symbol: string,
     public color: string = "#FFFFFF",
     public type: string = "Entity"
-  ) {} // Default color white
+  ) {}
 
   toString(): string {
     return this.symbol;
@@ -21,48 +41,53 @@ class Entity implements IEntity {
 
 class Plant extends Entity {
   constructor() {
-    super("P", "#00FF00", "Plant"); // Green
+    super("P", "#00FF00", "Plant");
   }
 }
 
 class Rock extends Entity {
   constructor() {
-    super("R", "#808080", "Rock"); // Grey
+    super("R", "#808080", "Rock");
   }
 }
 
 class Water extends Entity {
   constructor() {
-    super("W", "#0000FF", "Water"); // Blue
+    super("W", "#0000FF", "Water");
   }
 }
 
-export enum DietType {
-  HERBIVORE = "Herbivore",
-  CARNIVORE = "Carnivore",
-  OMNIVORE = "Omnivore",
-  UNKNOWN = "Unknown", // Default or for non-creatures/error states
-}
-
-import { parseSeed, CreatureAttributes } from "./seedParser"; // Import parser
+import { parseSeed, CreatureAttributes } from "./seedParser";
 
 class Creature extends Entity {
   public dietType: DietType;
   public movementSpeed: number;
-  public visionRange: number;
+  public activityCycle: ActivityCycle;
+  public perceptionType: PerceptionType; // New
+  public perceptionRange: number; // Renamed from visionRange
+  public perceptionAngle: number; // New (0-359 degrees)
+  public perceptionArc: number; // New (0-360 degrees)
 
   constructor(
     symbol: string = "C",
     color: string = "#FF0000",
     type: string = "Creature",
     dietType: DietType = DietType.UNKNOWN,
-    movementSpeed: number = 1, // Default speed 1
-    visionRange: number = 1 // Default vision 1
+    movementSpeed: number = 1,
+    activityCycle: ActivityCycle = ActivityCycle.NONE,
+    perceptionType: PerceptionType = PerceptionType.NONE, // New
+    perceptionRange: number = 1, // Default vision/perception 1
+    perceptionAngle: number = 0, // Default forward
+    perceptionArc: number = 45 // Default narrow cone
   ) {
     super(symbol, color, type);
     this.dietType = dietType;
     this.movementSpeed = movementSpeed;
-    this.visionRange = visionRange;
+    this.activityCycle = activityCycle;
+    this.perceptionType = perceptionType; // New
+    this.perceptionRange = perceptionRange; // Renamed
+    this.perceptionAngle = perceptionAngle; // New
+    this.perceptionArc = perceptionArc; // New
   }
 
   static fromSeed(
@@ -72,10 +97,9 @@ class Creature extends Entity {
   ): Creature | null {
     const attributes = parseSeed(seed);
     if (!attributes) {
-      return null; // Seed parsing failed (e.g., seed too short)
+      return null;
     }
 
-    // Determine symbol: use first letter of diet type, or provided default, or 'C'
     let symbolToUse = defaultSymbol;
     if (!symbolToUse) {
       switch (attributes.dietType) {
@@ -84,40 +108,44 @@ class Creature extends Entity {
           break;
         case DietType.CARNIVORE:
           symbolToUse = "C";
-          break; // Note: 'C' is also default generic Creature
+          break;
         case DietType.OMNIVORE:
           symbolToUse = "O";
           break;
         default:
-          symbolToUse = "Z"; // For UNKNOWN diet, use Z or some other indicator
+          symbolToUse = "Z";
       }
     }
 
-    // Determine color: map from diet type, or use provided default, or Creature default red
     let colorToUse = defaultColor;
     if (!colorToUse) {
       switch (attributes.dietType) {
         case DietType.HERBIVORE:
           colorToUse = "#22DD22";
-          break; // Slightly different green
+          break;
         case DietType.CARNIVORE:
           colorToUse = "#DD2222";
-          break; // Slightly different red
+          break;
         case DietType.OMNIVORE:
           colorToUse = "#DADA22";
-          break; // Slightly different yellow
+          break;
+        // Add color based on perception type if desired, or keep it diet-based
         default:
-          colorToUse = "#CCCCCC"; // Grey for UNKNOWN diet type
+          colorToUse = "#CCCCCC";
       }
     }
 
     return new Creature(
       symbolToUse,
       colorToUse,
-      "Creature", // type
+      "Creature",
       attributes.dietType,
       attributes.movementSpeed,
-      attributes.visionRange
+      attributes.activityCycle,
+      attributes.perceptionType, // New
+      attributes.perceptionRange, // Updated
+      attributes.perceptionAngle, // New
+      attributes.perceptionArc // New
     );
   }
 }
@@ -295,4 +323,5 @@ export {
   IRenderer,
   ConsoleRenderer,
   P5CanvasRenderer,
+  // DietType, ActivityCycle, PerceptionType are already exported where defined.
 };
