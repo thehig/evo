@@ -196,6 +196,59 @@ export class Creature extends Entity {
     return false;
   }
 
+  // Method for creature to find food in adjacent cells
+  public findFood(grid: Grid): IEntity | null {
+    // Energy cost for basic adjacent scan
+    this.energy -= 0.5; // Example cost, can be tuned
+    if (this.energy <= 0) return null; // Died from sensing
+
+    const currentX = this.x;
+    const currentY = this.y;
+
+    const adjacentOffsets = [
+      { dx: 0, dy: -1 }, // North
+      { dx: 1, dy: 0 }, // East
+      { dx: 0, dy: 1 }, // South
+      { dx: -1, dy: 0 }, // West
+    ];
+
+    for (const offset of adjacentOffsets) {
+      const foodX = currentX + offset.dx;
+      const foodY = currentY + offset.dy;
+      const potentialFood = grid.getCell(foodX, foodY);
+
+      if (potentialFood) {
+        // Check if this creature can eat the potential food
+        let canEatThis = false;
+        if (
+          this.dietType === DietType.HERBIVORE &&
+          potentialFood instanceof Plant
+        ) {
+          canEatThis = true;
+        } else if (
+          this.dietType === DietType.CARNIVORE &&
+          potentialFood instanceof Creature &&
+          potentialFood !== this
+        ) {
+          canEatThis = true;
+        } else if (this.dietType === DietType.OMNIVORE) {
+          if (potentialFood instanceof Plant) {
+            canEatThis = true;
+          } else if (
+            potentialFood instanceof Creature &&
+            potentialFood !== this
+          ) {
+            canEatThis = true;
+          }
+        }
+        if (canEatThis) {
+          return potentialFood; // Found edible food
+        }
+      }
+    }
+    return null; // No edible food found in adjacent cells
+  }
+
   getNextMove(): { newX: number; newY: number } | null {
     const possibleMoves = [
       { dx: 0, dy: -1 },

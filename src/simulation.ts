@@ -66,35 +66,36 @@ export class Simulation {
       // 1. Basic energy expenditure for existing
       creature.energy -= 1; // Example cost: 1 unit per tick
 
-      // 2. Check for death
+      // 2. Check for death (from existing cost or previous actions)
       if (creature.energy <= 0) {
         this.grid.removeEntity(creature);
-        // console.log(\`Creature \${creature.symbol} starved at (\${creature.x}, \${creature.y}).\`);
         continue; // Skip to next creature
       }
 
-      // 3. Attempt to find food and eat (simple adjacent check for now)
-      // Energy cost for sensing (very basic)
-      creature.energy -= 0.1;
+      // 3. Attempt to find food and eat
       let ateThisTurn = false;
-      const currentX = creature.x;
-      const currentY = creature.y;
+      const foundFood = creature.findFood(this.grid); // Uses new Creature method
 
-      // Check adjacent cells (N, E, S, W)
-      const adjacentOffsets = [
-        { dx: 0, dy: -1 }, // North
-        { dx: 1, dy: 0 }, // East
-        { dx: 0, dy: 1 }, // South
-        { dx: -1, dy: 0 }, // West
-      ];
+      // Check for death again (from sensing cost in findFood)
+      if (creature.energy <= 0) {
+        // It's possible the creature died from the energy cost of findFood itself
+        // If it was already very low on energy.
+        // findFood already checks this, but if it returned null due to death,
+        // we still need to ensure removal if not already handled by findFood's internal check.
+        // However, findFood currently returns null if energy <=0 *after* deduction, so creature instance is still there.
+        this.grid.removeEntity(creature);
+        continue;
+      }
 
-      for (const offset of adjacentOffsets) {
-        const foodX = currentX + offset.dx;
-        const foodY = currentY + offset.dy;
-        const potentialFood = this.grid.getCell(foodX, foodY);
-        if (potentialFood && creature.eat(potentialFood, this.grid)) {
+      if (foundFood) {
+        if (creature.eat(foundFood, this.grid)) {
           ateThisTurn = true;
-          break; // Ate, no need to check other adjacent cells or move this turn
+        }
+        // Check for death again (from eating related costs, though eat() currently only adds energy)
+        // Or if eating failed but cost energy somehow (not current model of eat())
+        if (creature.energy <= 0) {
+          this.grid.removeEntity(creature);
+          continue;
         }
       }
 

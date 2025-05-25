@@ -366,29 +366,36 @@ describe("Simulation - Feeding and Energy Dynamics", () => {
       0,
       undefined,
       undefined,
-      2.5
-    ); // Initial energy 2.5
+      2.0
+    ); // Initial energy 2.0
     expect(creature).not.toBeNull();
     if (!creature) return;
 
     gridInstance.addEntity(creature, 0, 0);
     creature.getNextMove = jest.fn(() => null); // Prevent movement for this test
+    // Mock findFood to return null, as we are testing starvation, not finding food.
+    // This also isolates the findFood energy cost for this test.
+    const findFoodSpy = jest
+      .spyOn(creature, "findFood")
+      .mockImplementation(() => {
+        creature.energy -= 0.5; // Simulate energy cost of findFood directly for this mock
+        if (creature.energy <= 0) gridInstance.removeEntity(creature); // Simulate death from sensing
+        return null;
+      });
 
     // Tick 1 (occurs when simulation.start() calls step())
     simulation.start();
-    // Energy: 2.5 (initial) - 1 (base) - 0.1 (sense) = 1.4 (no move attempt cost as getNextMove is null)
-    expect(creature.energy).toBeCloseTo(1.4);
+    // Energy: 2.0 (initial) - 1 (base) - 0.5 (findFood spy) = 0.5
+    expect(creature.energy).toBeCloseTo(0.5);
     expect(gridInstance.getCreatures()).toContain(creature);
 
     // Tick 2
     tickSimulation(1);
-    // Energy: 1.4 (start of tick) - 1 (base) - 0.1 (sense) = 0.3
-    expect(creature.energy).toBeCloseTo(0.3);
-    expect(gridInstance.getCreatures()).toContain(creature);
-
-    // Tick 3
-    tickSimulation(1);
-    // Energy: 0.3 (start of tick) - 1 (base) = -0.7. Creature removed after this base cost deduction.
+    // Energy: 0.5 (start of tick) - 1 (base) - 0.5 (findFood spy) = -1.0
+    // Creature is removed after base cost deduction makes energy <= 0 (0.5 - 1 = -0.5)
+    // The findFoodSpy or subsequent logic would confirm it is gone.
+    // In this tick: 0.5 - 1 (base) = -0.5. Creature is removed.
+    // findFoodSpy won't be called for this creature in this tick as it's removed.
     expect(gridInstance.getCreatures()).not.toContain(creature);
   });
 
@@ -409,13 +416,12 @@ describe("Simulation - Feeding and Energy Dynamics", () => {
     gridInstance.addEntity(herbivore, 0, 0);
     const initialCreatureEnergy = herbivore.energy; // Should be 100
 
-    // Mock getNextMove to ensure it doesn't try to move if it eats
     const getNextMoveSpy = jest.spyOn(herbivore, "getNextMove");
+    // No need to spy on findFood here, we want to test its actual implementation.
 
     simulation.start(); // This will call step once.
-    // Expected energy: 100 (initial) - 1 (base) - 0.1 (sense) + 20 (eat plant) = 118.9
-    // No movement costs because it ate.
-    expect(herbivore.energy).toBeCloseTo(118.9);
+    // Expected energy: 100 (initial) - 1 (base) - 0.5 (findFood) + 20 (eat plant) = 118.5
+    expect(herbivore.energy).toBeCloseTo(118.5);
     expect(gridInstance.getCell(0, 1)).toBeNull(); // Plant should be gone
     expect(gridInstance.getEntities().includes(adjacentPlant)).toBe(false);
     expect(gridInstance.getCreatures()).toContain(herbivore); // Herbivore still at (0,0)
@@ -424,5 +430,58 @@ describe("Simulation - Feeding and Energy Dynamics", () => {
     expect(getNextMoveSpy).not.toHaveBeenCalled(); // Should not attempt to move if it ate
   });
 
-  // More tests to come for carnivores, omnivores, adjacent eating, movement costs, etc.
+  // Test for creature moving and incurring movement costs when no food is found
+  it("creature should lose energy from moving if no food is found", () => {
+    const creature = actualGridModule.Creature.fromSeed(
+      "M1VD100",
+      0,
+      0,
+      undefined,
+      undefined,
+      100
+    ); // "M" for Mover
+    expect(creature).not.toBeNull();
+    if (!creature) return;
+
+    gridInstance.addEntity(creature, 0, 0);
+
+    // This spy REPLACES creature.findFood. The original findFood (with its 0.5 energy cost) does NOT run.
+    const findFoodSpy = jest.spyOn(creature, "findFood").mockReturnValue(null);
+
+    const moveCoords = { newX: 1, newY: 0 };
+    const getNextMoveSpy = jest
+      .spyOn(creature, "getNextMove")
+      .mockReturnValue(moveCoords);
+    const moveEntitySpy = jest
+      .spyOn(gridInstance, "moveEntity")
+      .mockImplementation((entity, newX, newY) => {
+        entity.x = newX;
+        entity.y = newY;
+        return true;
+      });
+
+    simulation.start(); // Tick 1
+
+    // Energy Trace for simulation.start():
+    // creature.energy initial = 100
+    // 1. Base cost: 100 - 1 = 99. (creature.energy is 99)
+    // 2. Simulation calls creature.findFood(gridInstance) -> The spy runs, returns null. No energy change from findFood itself here.
+    //    (creature.energy is still 99)
+    // 3. No eating, as foundFood is null. ateThisTurn = false.
+    // 4. Simulation calls creature.getNextMove() (spy returns {1,0}).
+    // 5. Cost for move attempt: creature.energy (99) becomes 99 - 1 = 98.
+    // 6. Simulation calls gridInstance.moveEntity(...). Spy runs, updates coords, returns true.
+    // 7. Cost for successful move: creature.energy (98) becomes 98 - 2 = 96.
+
+    expect(creature.energy).toBeCloseTo(96.0);
+    expect(findFoodSpy).toHaveBeenCalled();
+    expect(getNextMoveSpy).toHaveBeenCalled();
+    expect(moveEntitySpy).toHaveBeenCalledWith(
+      creature,
+      moveCoords.newX,
+      moveCoords.newY
+    );
+    expect(creature.x).toBe(moveCoords.newX);
+    expect(creature.y).toBe(moveCoords.newY);
+  });
 });
