@@ -48,6 +48,8 @@ jest.mock("./grid", () => {
     Grid: jest.fn().mockImplementation(() => ({
       getCreatures: jest.fn(() => []),
       moveEntity: jest.fn(() => true),
+      getCell: jest.fn((x, y) => null),
+      removeEntity: jest.fn(() => true),
     })),
     // Creature mock needs to be more careful if we want to use its constructor for type checks
     // For simplicity in this mock, if Creature instances are not deeply inspected beyond getNextMove,
@@ -305,4 +307,122 @@ describe("Simulation", () => {
       );
     });
   });
+});
+
+describe("Simulation - Feeding and Energy Dynamics", () => {
+  let simulation: Simulation;
+  let actualGridModule: typeof GridModuleType;
+  let gridInstance: Grid; // Using a real grid instance for these tests
+  let mockRendererInstance: jest.Mocked<IRenderer>;
+  let requestAnimationFrameSpy: ReturnType<typeof jest.spyOn>;
+  let cancelAnimationFrameSpy: ReturnType<typeof jest.spyOn>;
+  let animationFrameCallbackStorage: FrameRequestCallback | null = null;
+
+  beforeEach(() => {
+    actualGridModule = jest.requireActual<typeof GridModuleType>("./grid");
+    gridInstance = new actualGridModule.Grid(5, 5); // A small grid for focused tests
+    mockRendererInstance = {
+      setup: jest.fn(),
+      render: jest.fn(),
+    };
+    simulation = new Simulation(gridInstance, mockRendererInstance);
+
+    // Mock animation frames
+    animationFrameCallbackStorage = null;
+    requestAnimationFrameSpy = jest
+      .spyOn(global, "requestAnimationFrame")
+      .mockImplementation((cb: FrameRequestCallback) => {
+        animationFrameCallbackStorage = cb;
+        return 1;
+      });
+    cancelAnimationFrameSpy = jest
+      .spyOn(global, "cancelAnimationFrame")
+      .mockImplementation(() => {});
+
+    // Mock console logs/errors for cleaner test output
+    jest.spyOn(console, "log").mockImplementation(() => {});
+    jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    simulation.pause();
+    requestAnimationFrameSpy.mockRestore();
+    cancelAnimationFrameSpy.mockRestore();
+    jest.restoreAllMocks(); // Restore all mocks, including console
+  });
+
+  const tickSimulation = (count: number = 1) => {
+    for (let i = 0; i < count; i++) {
+      if (animationFrameCallbackStorage) {
+        animationFrameCallbackStorage(performance.now());
+      }
+    }
+  };
+
+  it("creature should lose energy each tick and die when energy is zero or less", () => {
+    const creature = actualGridModule.Creature.fromSeed(
+      "H1VD100",
+      0,
+      0,
+      undefined,
+      undefined,
+      2.5
+    ); // Initial energy 2.5
+    expect(creature).not.toBeNull();
+    if (!creature) return;
+
+    gridInstance.addEntity(creature, 0, 0);
+    creature.getNextMove = jest.fn(() => null); // Prevent movement for this test
+
+    // Tick 1 (occurs when simulation.start() calls step())
+    simulation.start();
+    // Energy: 2.5 (initial) - 1 (base) - 0.1 (sense) = 1.4 (no move attempt cost as getNextMove is null)
+    expect(creature.energy).toBeCloseTo(1.4);
+    expect(gridInstance.getCreatures()).toContain(creature);
+
+    // Tick 2
+    tickSimulation(1);
+    // Energy: 1.4 (start of tick) - 1 (base) - 0.1 (sense) = 0.3
+    expect(creature.energy).toBeCloseTo(0.3);
+    expect(gridInstance.getCreatures()).toContain(creature);
+
+    // Tick 3
+    tickSimulation(1);
+    // Energy: 0.3 (start of tick) - 1 (base) = -0.7. Creature removed after this base cost deduction.
+    expect(gridInstance.getCreatures()).not.toContain(creature);
+  });
+
+  it("herbivore should eat ADJACENT plant, gain energy, plant removed, and not move", () => {
+    const herbivore = actualGridModule.Creature.fromSeed(
+      "H1VD100",
+      0,
+      0,
+      undefined,
+      undefined,
+      100
+    );
+    expect(herbivore).not.toBeNull();
+    if (!herbivore) return;
+
+    const adjacentPlant = new actualGridModule.Plant(0, 1); // Plant is South of herbivore
+    gridInstance.addEntity(adjacentPlant, 0, 1);
+    gridInstance.addEntity(herbivore, 0, 0);
+    const initialCreatureEnergy = herbivore.energy; // Should be 100
+
+    // Mock getNextMove to ensure it doesn't try to move if it eats
+    const getNextMoveSpy = jest.spyOn(herbivore, "getNextMove");
+
+    simulation.start(); // This will call step once.
+    // Expected energy: 100 (initial) - 1 (base) - 0.1 (sense) + 20 (eat plant) = 118.9
+    // No movement costs because it ate.
+    expect(herbivore.energy).toBeCloseTo(118.9);
+    expect(gridInstance.getCell(0, 1)).toBeNull(); // Plant should be gone
+    expect(gridInstance.getEntities().includes(adjacentPlant)).toBe(false);
+    expect(gridInstance.getCreatures()).toContain(herbivore); // Herbivore still at (0,0)
+    expect(herbivore.x).toBe(0);
+    expect(herbivore.y).toBe(0);
+    expect(getNextMoveSpy).not.toHaveBeenCalled(); // Should not attempt to move if it ate
+  });
+
+  // More tests to come for carnivores, omnivores, adjacent eating, movement costs, etc.
 });

@@ -71,6 +71,7 @@ export class Creature extends Entity {
   public perceptionRange: number;
   public perceptionAngle: number;
   public perceptionArc: number;
+  public energy: number;
 
   constructor(
     symbol: string = "C",
@@ -84,7 +85,8 @@ export class Creature extends Entity {
     perceptionType: PerceptionType = PerceptionType.NONE,
     perceptionRange: number = 1,
     perceptionAngle: number = 0,
-    perceptionArc: number = 45
+    perceptionArc: number = 45,
+    energy: number = 100
   ) {
     super(symbol, color, type, x, y);
     this.dietType = dietType;
@@ -94,6 +96,7 @@ export class Creature extends Entity {
     this.perceptionRange = perceptionRange;
     this.perceptionAngle = perceptionAngle;
     this.perceptionArc = perceptionArc;
+    this.energy = energy;
   }
 
   static fromSeed(
@@ -101,7 +104,8 @@ export class Creature extends Entity {
     x: number = -1,
     y: number = -1,
     defaultSymbol?: string,
-    defaultColor?: string
+    defaultColor?: string,
+    initialEnergy: number = 100
   ): Creature | null {
     const attributes = parseSeed(seed);
     if (!attributes) {
@@ -154,8 +158,42 @@ export class Creature extends Entity {
       attributes.perceptionType,
       attributes.perceptionRange,
       attributes.perceptionAngle,
-      attributes.perceptionArc
+      attributes.perceptionArc,
+      initialEnergy
     );
+  }
+
+  public eat(target: IEntity, grid: Grid): boolean {
+    let energyGain = 0;
+    let canEat = false;
+
+    if (this.dietType === DietType.HERBIVORE && target instanceof Plant) {
+      energyGain = 20;
+      canEat = true;
+    } else if (
+      this.dietType === DietType.CARNIVORE &&
+      target instanceof Creature
+    ) {
+      if (target !== this) {
+        energyGain = 50;
+        canEat = true;
+      }
+    } else if (this.dietType === DietType.OMNIVORE) {
+      if (target instanceof Plant) {
+        energyGain = 20;
+        canEat = true;
+      } else if (target instanceof Creature && target !== this) {
+        energyGain = 50;
+        canEat = true;
+      }
+    }
+
+    if (canEat) {
+      this.energy += energyGain;
+      grid.removeEntity(target);
+      return true;
+    }
+    return false;
   }
 
   getNextMove(): { newX: number; newY: number } | null {

@@ -1,6 +1,6 @@
 # Task ID: 6
 # Title: Implement Creature Feeding Behavior
-# Status: pending
+# Status: in-progress
 # Dependencies: 3, 4, 5
 # Priority: medium
 # Description: Enable creatures to eat other entities based on their diet type.
