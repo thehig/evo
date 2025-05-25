@@ -1,6 +1,6 @@
 # Task ID: 5
 # Title: Create Basic World Simulation Loop
-# Status: pending
+# Status: done
 # Dependencies: 1, 2
 # Priority: high
 # Description: Implement the core simulation loop that advances the world state over time.
