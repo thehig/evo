@@ -3,19 +3,20 @@ import { vi, describe, it, expect, beforeEach, afterEach } from "vitest"; // Add
 import { Grid, Rock, Plant, Creature, Entity, Water } from "../src/grid"; // Adjusted import path
 
 // Mock console.error to prevent log spamming
-let consoleErrorSpy: ReturnType<typeof vi.spyOn>; // Replaced jest.SpiedFunction
-let consoleLogSpy: ReturnType<typeof vi.spyOn>; // Replaced jest.SpiedFunction
+// let consoleErrorSpy: ReturnType<typeof vi.spyOn>; // Replaced jest.SpiedFunction
+// let consoleLogSpy: ReturnType<typeof vi.spyOn>; // Replaced jest.SpiedFunction
 let grid: Grid; // Declare grid here
 
 beforeEach(() => {
   grid = new Grid(3, 2); // Test with a 3x2 grid
-  consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {}); // Replaced jest.spyOn
-  consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {}); // Replaced jest.spyOn
+  // Console spies are now global from vitest.setup.ts
 });
 
 afterEach(() => {
-  consoleErrorSpy.mockRestore();
-  consoleLogSpy.mockRestore(); // Restore console.log
+  // Restore specific mocks if any were added in tests, otherwise, global console spies remain.
+  // vi.restoreAllMocks(); // Might be too broad if only console spies from setup are used.
+  // If tests in this file add their own spies, then vi.restoreAllMocks() is appropriate here.
+  // For now, assuming only global console spies are used and they don't need per-test-file restoration.
 });
 
 describe("Grid", () => {
@@ -135,7 +136,7 @@ describe("Grid", () => {
       plant.x = -1; // Simulate entity's coordinates becoming invalid without grid update
       plant.y = -1;
       expect(grid.removeEntity(plant)).toBe(false);
-      expect(grid.getCell(0, 0)).toBe(plant); // Still on grid because remove failed
+      expect(grid.getCell(0, 0)).toBe(plant); // Plant should still be at its original registered location on grid
     });
   });
 

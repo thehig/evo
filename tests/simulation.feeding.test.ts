@@ -4,76 +4,55 @@ import {
   Grid,
   Creature,
   Plant,
-  Rock,
-  Water,
-  Entity,
+  // Rock, // Not used
+  // Water, // Not used
+  // Entity, // Not used
   DietType,
   ActivityCycle,
   PerceptionType,
-  IEntity,
-  IRenderer,
+  // IEntity, // Not used
+  type IRenderer,
 } from "../src/grid";
+import {
+  mockAnimationFrames,
+  mockRenderer as globalMockRenderer,
+} from "./vitest.setup"; // Import setup helpers
 
-// Extend the NodeJS.Global interface
-declare global {
-  namespace NodeJS {
-    interface Global {
-      requestAnimationFrame: (callback: FrameRequestCallback) => number;
-      cancelAnimationFrame: (id: number) => void;
-    }
-  }
-}
-
-// Polyfill for requestAnimationFrame
-if (typeof global.requestAnimationFrame === "undefined") {
-  global.requestAnimationFrame = (callback: FrameRequestCallback): number => {
-    return setTimeout(callback, 0);
-  };
-}
-if (typeof global.cancelAnimationFrame === "undefined") {
-  global.cancelAnimationFrame = (id: number): void => {
-    clearTimeout(id);
-  };
-}
-
-let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
-let consoleLogSpy: ReturnType<typeof vi.spyOn>;
+// Polyfill for requestAnimationFrame - REMOVED (handled by setup)
+// consoleErrorSpy, consoleLogSpy - REMOVED (handled by setup)
 
 describe("Simulation - Feeding and Energy Dynamics", () => {
   let gridInstance: Grid;
-  let mockRendererInstance: IRenderer;
+  // let mockRendererInstance: IRenderer; // Use global mock or a fresh one per test
   let simulationInstance: Simulation;
-  let animationFrameCallbackStorage: FrameRequestCallback | null = null;
+  // let animationFrameCallbackStorage: FrameRequestCallback | null = null; // Handled by mockAnimationFrames
+  let animationMocks: ReturnType<typeof mockAnimationFrames>;
 
   beforeEach(() => {
     gridInstance = new Grid(5, 5);
-    mockRendererInstance = {
+    // mockRendererInstance = { ...globalMockRenderer, setup: vi.fn(), render: vi.fn() }; // Create a fresh mock for each test if needed
+    // For this test, a shared mock renderer that is cleared might be okay if its state isn't critical between tests.
+    // However, it's safer to create a fresh one or ensure globalMockRenderer's spies are reset.
+    // For simplicity, we will use a fresh mock based on the global one.
+    const mockRendererInstance: IRenderer = {
       setup: vi.fn(),
       render: vi.fn(),
     };
+
     simulationInstance = new Simulation(gridInstance, mockRendererInstance);
     simulationInstance.simulationSpeed = 0; // Run as fast as possible for test
 
-    animationFrameCallbackStorage = null;
-    vi.spyOn(global, "requestAnimationFrame").mockImplementation(
-      (cb: FrameRequestCallback) => {
-        animationFrameCallbackStorage = cb;
-        return 1;
-      }
-    );
-    vi.spyOn(global, "cancelAnimationFrame").mockImplementation(() => {
-      animationFrameCallbackStorage = null;
-    });
+    animationMocks = mockAnimationFrames(); // Setup animation mocks for this describe block
 
-    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    // Spies for console are now global and suppress output by default
+    // If a specific test needs to assert console output, it can vi.spyOn(console, 'error').mockImplementationOnce(...);
   });
 
   afterEach(() => {
     simulationInstance.pause();
-    consoleErrorSpy.mockRestore();
-    consoleLogSpy.mockRestore();
-    vi.restoreAllMocks();
+    animationMocks.requestAnimationFrameMock.mockRestore();
+    animationMocks.cancelAnimationFrameMock.mockRestore();
+    // vi.restoreAllMocks(); // This might be too broad if global spies are affected, rely on specific restores or Vitest's per-test isolation
   });
 
   it("creature should lose energy each step and die if energy reaches zero", () => {
@@ -97,25 +76,14 @@ describe("Simulation - Feeding and Energy Dynamics", () => {
     vi.spyOn(creature, "findFood").mockReturnValue(null);
     vi.spyOn(creature, "eat").mockReturnValue(false);
 
-    simulationInstance.start();
+    simulationInstance.start(); // This will use the mocked requestAnimationFrame
+    // and trigger the first tick.
 
-    // Tick 1
-    // Simulation.start() executes the first tick immediately.
-    // Energy: 2 (start)
-    // -1 (base cost in Simulation.step) -> 1
-    // findFood mock is called, ateThisTurn = false
-    // -1 (cost for attempting to move, because !ateThisTurn) -> 0
-    // getNextMove mock is called.
-    // Creature energy is 0, so it dies at the end of this first step processing loop or beginning of next.
-    // The check for energy <=0 and removal happens *before* findFood/move in the loop for *that creature*.
-    // However, after all costs, energy is 0. So removeEntity will be called.
+    // The first tick runs immediately upon calling start()
+    // animationMocks.triggerAnimationFrame(); // No need to trigger first frame, start() does it.
 
-    // Let's check state *after* the first tick completes (which is done by simulation.start() itself)
-    expect(creature.energy).toBe(0); // Energy should be 0 after all costs in the first step
-    expect(gridInstance.getCreatures()).not.toContain(creature); // Should be removed as energy is 0
-
-    // No second tick needed to test death if energy is 0 after first tick's actions.
-    // If we were to simulate a second tick, the creature would already be gone.
+    expect(creature.energy).toBe(0);
+    expect(gridInstance.getCreatures()).not.toContain(creature);
   });
 
   it("herbivore should eat adjacent plant, gain energy, and plant should be removed", () => {
@@ -134,31 +102,27 @@ describe("Simulation - Feeding and Energy Dynamics", () => {
       0,
       50
     );
-    const plant = new Plant(0, 1); // Plant south of herbivore
+    const plant = new Plant(0, 1);
     gridInstance.addEntity(herbivore, 0, 0);
     gridInstance.addEntity(plant, 0, 1);
 
-    const initialEnergy = herbivore.energy; // 50
-    const plantEnergyValue = 20; // From Creature.eat()
-    const baseMetabolicCost = 1; // From Simulation.step()
-    const findFoodCost = 0.5; // From Creature.findFood()
+    const initialEnergy = herbivore.energy;
+    const plantEnergyValue = 20;
+    const baseMetabolicCost = 1;
+    const findFoodCost = 0.5;
 
     const removeEntitySpy = vi.spyOn(gridInstance, "removeEntity");
     const eatSpy = vi.spyOn(herbivore, "eat");
     vi.spyOn(herbivore, "getNextMove").mockReturnValue(null);
 
-    // simulation.start() will execute the first step where eating occurs.
-    simulationInstance.start();
+    simulationInstance.start(); // First tick (eating occurs)
+    // animationMocks.triggerAnimationFrame(); // No need to trigger first frame
 
-    // Expected energy after the first step (where eating occurs):
-    // Initial (50) - baseMetabolicCost (1) - findFoodCost (0.5) + plantEnergyValue (20) = 68.5
     const expectedEnergyAfterEatingStep =
       initialEnergy - baseMetabolicCost - findFoodCost + plantEnergyValue;
     expect(herbivore.energy).toBe(expectedEnergyAfterEatingStep);
     expect(eatSpy).toHaveBeenCalledWith(plant, gridInstance);
     expect(removeEntitySpy).toHaveBeenCalledWith(plant);
     expect(gridInstance.getCell(plant.x, plant.y)).toBeNull();
-
-    // To be very clear, we are not triggering a second animation frame here for this specific test's assertions.
   });
 });

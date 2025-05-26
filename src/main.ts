@@ -72,6 +72,20 @@ const sketch = (p: p5) => {
       console.log("Grid reset and re-populated. Simulation ready to start.");
     });
 
+    const stepButton = p.createButton("Step");
+    stepButton.mousePressed(() => {
+      if (!simulation.isSimulationRunning()) {
+        if (simulation.getTickCount() === 0) {
+          // If simulation is pristine (never run, or reset and pristine)
+          simulation.start(); // Start the continuous simulation and perform the first tick
+        } else {
+          // If simulation is paused but has run before
+          simulation.manualStep(); // Perform a single step, remains paused
+        }
+      }
+      // If simulation is already running continuously, Step button does nothing.
+    });
+
     // simulation.start(); // Auto-start the simulation if desired
   };
 

@@ -1,4 +1,4 @@
-import { Grid, Creature, IRenderer } from "./grid";
+import { Grid, Creature, type IRenderer } from "./grid";
 
 export class Simulation {
   private grid: Grid;
@@ -52,6 +52,15 @@ export class Simulation {
 
   public getTickCount(): number {
     return this.tickCount;
+  }
+
+  public manualStep(): void {
+    if (!this.isRunning) {
+      // Typically, manual step is for when simulation is paused
+      this.step();
+    } else {
+      console.warn("Manual step is ignored when simulation is running.");
+    }
   }
 
   // The main simulation step

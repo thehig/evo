@@ -1,125 +1,61 @@
-import { vi, describe, it, expect, beforeEach, afterEach } from "vitest"; // Added Vitest imports
-// import { describe, it, expect, beforeEach, jest, afterEach } from "@jest/globals"; // Removed for Vitest
+import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
 import { Simulation } from "../src/simulation";
-import type * as GridModuleType from "../src/grid"; // Import the module type
+// import type * as GridModuleType from "../src/grid"; // Not strictly needed with explicit imports
 import {
   Grid,
   Creature,
-  IRenderer,
-  IEntity,
+  type IRenderer, // Use type import
+  // IEntity, // Not used directly
   DietType,
-  ActivityCycle,
-  PerceptionType,
+  // ActivityCycle, // Not used directly
+  // PerceptionType, // Not used directly
 } from "../src/grid";
+import {
+  mockAnimationFrames,
+  mockRenderer as globalMockRenderer,
+} from "./vitest.setup"; // Import setup helpers
 
-// Extend the NodeJS.Global interface to include browser-specific animation methods
-declare global {
-  namespace NodeJS {
-    interface Global {
-      requestAnimationFrame: (callback: FrameRequestCallback) => number;
-      cancelAnimationFrame: (id: number) => void;
-    }
-  }
-}
+// Polyfills and global spies are now in vitest.setup.ts
 
-// Simple polyfill for requestAnimationFrame and cancelAnimationFrame for Node.js environment
-if (typeof global.requestAnimationFrame === "undefined") {
-  global.requestAnimationFrame = (callback: FrameRequestCallback): number => {
-    return setTimeout(callback, 0); // Use setTimeout for a basic polyfill
-  };
-}
-if (typeof global.cancelAnimationFrame === "undefined") {
-  global.cancelAnimationFrame = (id: number): void => {
-    clearTimeout(id);
-  };
-}
-
-// Mocks - TRYING TO SIMPLIFY/COMMENT OUT FOR NOW
-/*
-jest.mock("../src/grid", () => {
-  const actualGridModule = jest.requireActual<typeof GridModuleType>("../src/grid");
-  return {
-    ...actualGridModule,
-    Grid: vi.fn().mockImplementation(() => ({
-      getCreatures: vi.fn(() => []),
-      moveEntity: vi.fn(() => true),
-      getCell: vi.fn((x, y) => null),
-      removeEntity: vi.fn(() => true),
-    })),
-    Creature: vi.fn().mockImplementation((...args: any[]) => ({
-      symbol: args[0] || "C",
-      color: args[1] || "#FF0000",
-      type: args[2] || "Creature",
-      x: args[3] || 0,
-      y: args[4] || 0,
-      dietType: args[5] || actualGridModule.DietType.UNKNOWN,
-      getNextMove: vi.fn(() => null),
-    })),
-  };
-});
-*/
-
-const mockRenderer: IRenderer = {
-  setup: vi.fn(),
-  render: vi.fn(),
-};
-
-// Mock console.error and console.log to prevent log spamming
-let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
-let consoleLogSpy: ReturnType<typeof vi.spyOn>;
+// Mock console.error and console.log - REMOVED (handled by setup)
+// let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+// let consoleLogSpy: ReturnType<typeof vi.spyOn>;
 
 describe("Simulation", () => {
-  let mockGridInstance: Grid; // Will use actual grid and spy on methods
+  let mockGridInstance: Grid;
   let simulation: Simulation;
-  let requestAnimationFrameSpy: ReturnType<typeof vi.spyOn>;
-  let cancelAnimationFrameSpy: ReturnType<typeof vi.spyOn>;
-  let animationFrameCallbackStorage: FrameRequestCallback | null = null;
+  let animationMocks: ReturnType<typeof mockAnimationFrames>;
+  let testMockRenderer: IRenderer;
 
   beforeEach(() => {
-    animationFrameCallbackStorage = null;
-
     mockGridInstance = new Grid(10, 10); // Use actual Grid
 
-    // Spy on methods of the actual instance.
-    // These spies will be active for all tests in this describe block.
-    // Individual tests or nested describe blocks can further refine mockReturnValueOnce etc.
+    // Spy on methods of the actual instance if needed for specific assertions.
+    // It's often better to spy only when necessary within a test or a nested describe.
+    // For broad spying like this, ensure restoration in afterEach.
     vi.spyOn(mockGridInstance, "getCreatures");
     vi.spyOn(mockGridInstance, "moveEntity");
     vi.spyOn(mockGridInstance, "removeEntity");
     vi.spyOn(mockGridInstance, "getCell");
     vi.spyOn(mockGridInstance, "addEntity");
 
-    (mockRenderer.render as ReturnType<typeof vi.fn>).mockClear();
-    (mockRenderer.setup as ReturnType<typeof vi.fn>).mockClear();
+    // Create a fresh mock renderer for each test to avoid state leakage
+    testMockRenderer = {
+      setup: vi.fn(),
+      render: vi.fn(),
+    };
 
-    simulation = new Simulation(mockGridInstance, mockRenderer);
+    simulation = new Simulation(mockGridInstance, testMockRenderer);
+    animationMocks = mockAnimationFrames(); // Setup animation mocks
 
-    requestAnimationFrameSpy = vi
-      .spyOn(global, "requestAnimationFrame")
-      .mockImplementation((cb: FrameRequestCallback) => {
-        animationFrameCallbackStorage = cb;
-        return 1; // Return a dummy ID
-      });
-
-    cancelAnimationFrameSpy = vi
-      .spyOn(global, "cancelAnimationFrame")
-      .mockImplementation((id: number) => {
-        if (id === 1 && animationFrameCallbackStorage) {
-          animationFrameCallbackStorage = null;
-        }
-      });
-
-    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    // Global console spies are active from setup file.
   });
 
   afterEach(() => {
     simulation.pause();
-    requestAnimationFrameSpy.mockRestore();
-    cancelAnimationFrameSpy.mockRestore();
-    animationFrameCallbackStorage = null;
-    if (consoleErrorSpy) consoleErrorSpy.mockRestore();
-    if (consoleLogSpy) consoleLogSpy.mockRestore();
+    animationMocks.requestAnimationFrameMock.mockRestore();
+    animationMocks.cancelAnimationFrameMock.mockRestore();
+    vi.restoreAllMocks(); // Restore all mocks, including those on mockGridInstance and any others
   });
 
   it("should initialize with tickCount 0 and not running", () => {
@@ -131,32 +67,44 @@ describe("Simulation", () => {
     it("should set isRunning to true and request an animation frame", () => {
       simulation.start();
       expect(simulation.isSimulationRunning()).toBe(true);
+      expect(animationMocks.requestAnimationFrameMock).toHaveBeenCalled();
     });
 
     it("should not start if already running", () => {
       simulation.start();
-      simulation.start();
+      const initialCallCount =
+        animationMocks.requestAnimationFrameMock.mock.calls.length;
+      simulation.start(); // Call start again
+      expect(animationMocks.requestAnimationFrameMock.mock.calls.length).toBe(
+        initialCallCount
+      );
+      expect(testMockRenderer.render).toHaveBeenCalledTimes(1); // Assuming start calls render once
     });
   });
 
   describe("pause", () => {
     it("should set isRunning to false and cancel animation frame if running", () => {
-      simulation.start();
+      simulation.start(); // This requests an animation frame
       simulation.pause();
       expect(simulation.isSimulationRunning()).toBe(false);
+      expect(animationMocks.cancelAnimationFrameMock).toHaveBeenCalled();
     });
 
     it("should not cancel animation frame if not running", () => {
       simulation.pause();
+      expect(animationMocks.cancelAnimationFrameMock).not.toHaveBeenCalled();
     });
   });
 
   describe("reset", () => {
     it("should pause the simulation, reset tickCount, and render", () => {
       simulation.start();
+      // Manually trigger one frame to ensure simulation is in a state that can be reset
+      animationMocks.triggerAnimationFrame();
       simulation.reset();
       expect(simulation.isSimulationRunning()).toBe(false);
       expect(simulation.getTickCount()).toBe(0);
+      expect(testMockRenderer.render).toHaveBeenCalled(); // Reset should call render
     });
   });
 
@@ -165,6 +113,11 @@ describe("Simulation", () => {
     let mockCreature2: Creature;
 
     beforeEach(() => {
+      // Clear mocks on gridInstance from parent beforeEach, or re-initialize grid here if preferred
+      vi.mocked(mockGridInstance.getCreatures).mockClear();
+      vi.mocked(mockGridInstance.moveEntity).mockClear();
+      vi.mocked(mockGridInstance.removeEntity).mockClear();
+
       mockCreature1 = new Creature(
         "C1",
         "#111111",
@@ -186,27 +139,26 @@ describe("Simulation", () => {
         2,
         DietType.CARNIVORE
       );
-      vi.spyOn(mockCreature2, "getNextMove").mockReturnValue(null); // Creature 2 will not move
+      vi.spyOn(mockCreature2, "getNextMove").mockReturnValue(null);
 
-      // Reset and re-configure mocks for gridInstance for this describe block
-      vi.mocked(mockGridInstance.getCreatures)
-        .mockReset()
-        .mockReturnValue([mockCreature1, mockCreature2]);
-      vi.mocked(mockGridInstance.moveEntity).mockReset().mockReturnValue(true);
-      vi.mocked(mockGridInstance.removeEntity)
-        .mockReset()
-        .mockReturnValue(true);
+      vi.mocked(mockGridInstance.getCreatures).mockReturnValue([
+        mockCreature1,
+        mockCreature2,
+      ]);
+      vi.mocked(mockGridInstance.moveEntity).mockReturnValue(true); // Default mock for move
+    });
+
+    afterEach(() => {
+      // Important to restore mocks on creatures if they are spied on in beforeEach of this describe block
+      vi.restoreAllMocks();
     });
 
     it("should increment tickCount, process creatures, and render on each step", () => {
-      // Before start, tickCount is 0
       expect(simulation.getTickCount()).toBe(0);
+      simulation.start(); // First step/tick happens here, tickCount = 1
 
-      simulation.start(); // This executes the first step synchronously via this.tick() -> this.step()
-
-      // After start() (which includes the first step):
       expect(simulation.getTickCount()).toBe(1);
-      expect(mockGridInstance.getCreatures).toHaveBeenCalledTimes(1); // Called once in the first step
+      expect(mockGridInstance.getCreatures).toHaveBeenCalledTimes(1);
       expect(mockCreature1.getNextMove).toHaveBeenCalledTimes(1);
       expect(mockCreature2.getNextMove).toHaveBeenCalledTimes(1);
       expect(mockGridInstance.moveEntity).toHaveBeenCalledWith(
@@ -214,45 +166,40 @@ describe("Simulation", () => {
         1,
         1
       );
-      expect(mockGridInstance.moveEntity).toHaveBeenCalledTimes(1); // Only creature1 generates a move object
+      expect(mockGridInstance.moveEntity).toHaveBeenCalledTimes(1); // Only C1 moves
+      expect(testMockRenderer.render).toHaveBeenCalledTimes(1); // Render after first step
 
-      // Manually trigger the animation frame callback to simulate the second step
-      if (animationFrameCallbackStorage) {
-        animationFrameCallbackStorage(performance.now());
-      }
-      expect(simulation.getTickCount()).toBe(2); // Tick count should be 2 after second step
-      expect(mockGridInstance.getCreatures).toHaveBeenCalledTimes(2); // Called again in the second step
+      animationMocks.triggerAnimationFrame(); // Simulate second step/tick
+
+      expect(simulation.getTickCount()).toBe(2);
+      expect(mockGridInstance.getCreatures).toHaveBeenCalledTimes(2);
       expect(mockCreature1.getNextMove).toHaveBeenCalledTimes(2);
       expect(mockCreature2.getNextMove).toHaveBeenCalledTimes(2);
-      // moveEntity for creature1 would be called again if it moved again.
-      // Assuming getNextMove for C1 is still {1,1} and it can move there again.
-      expect(mockGridInstance.moveEntity).toHaveBeenCalledTimes(2);
+      expect(mockGridInstance.moveEntity).toHaveBeenCalledTimes(2); // C1 moves again
+      expect(testMockRenderer.render).toHaveBeenCalledTimes(2); // Render after second step
     });
 
     it("should not process further steps if paused immediately", () => {
-      vi.mocked(mockGridInstance.getCreatures).mockClear();
-      vi.mocked(mockGridInstance.moveEntity).mockClear();
-      vi.mocked(mockCreature1.getNextMove as any).mockClear(); // Cast to any if type issue
-      vi.mocked(mockCreature2.getNextMove as any).mockClear();
+      simulation.start(); // First step/tick (tickCount becomes 1), rAF for 2nd step scheduled.
+      vi.clearAllMocks(); // Clear mocks after start to only count subsequent calls.
+      // Re-mock returns for grid since clearAllMocks clears them.
+      vi.mocked(mockGridInstance.getCreatures).mockReturnValue([
+        mockCreature1,
+        mockCreature2,
+      ]);
+      vi.mocked(mockGridInstance.moveEntity).mockReturnValue(true);
 
-      simulation.start(); // First step executes, tickCount becomes 1. Animation frame for 2nd step is scheduled.
-      simulation.pause(); // Pause immediately. This should cancel the scheduled animation frame.
-
-      expect(simulation.getTickCount()).toBe(1); // First step ran before pause
+      simulation.pause(); // Pause immediately. This should cancel the scheduled rAF.
 
       // Try to trigger animation frame callback - it shouldn't run step() due to pause
-      if (animationFrameCallbackStorage) {
-        // console.log("Manually calling stored rAF callback while paused");
-        animationFrameCallbackStorage(performance.now());
-      }
+      animationMocks.triggerAnimationFrame();
 
-      expect(simulation.getTickCount()).toBe(1); // Tick count should remain 1
-
-      // getCreatures was called once by the initial step triggered by start()
-      expect(mockGridInstance.getCreatures).toHaveBeenCalledTimes(1);
-      expect(mockCreature1.getNextMove).toHaveBeenCalledTimes(1);
-      expect(mockCreature2.getNextMove).toHaveBeenCalledTimes(1);
-      expect(mockGridInstance.moveEntity).toHaveBeenCalledTimes(1); // For creature1 from the first step
+      // Assert that no processing methods were called after pause
+      expect(mockGridInstance.getCreatures).not.toHaveBeenCalled();
+      expect(mockCreature1.getNextMove).not.toHaveBeenCalled();
+      expect(mockCreature2.getNextMove).not.toHaveBeenCalled();
+      expect(mockGridInstance.moveEntity).not.toHaveBeenCalled();
+      expect(testMockRenderer.render).not.toHaveBeenCalled(); // Render should not have been called after pause.
     });
   });
 });
