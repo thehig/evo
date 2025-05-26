@@ -3,12 +3,14 @@
   "version": "0.1.0",
   "description": "Evolution simulation game",
   "main": "dist/grid.js",
+  "type": "module",
   "scripts": {
     "start": "vite",
     "build": "tsc && vite build",
     "watch": "tsc -w",
     "serve": "vite",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:ui": "vitest --ui"
   },
   "keywords": [
     "evolution",
@@ -20,7 +22,7 @@
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/p5": "^1.7.6",
-    "@vitest/ui": "^1.0.0",
+    "@vitest/ui": "^1.6.1",
     "jsdom": "^26.1.0",
     "typescript": "^5.0.0",
     "vite": "^5.0.0",
