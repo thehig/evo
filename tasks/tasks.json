@@ -63,7 +63,7 @@
       "id": 6,
       "title": "Implement Creature Feeding Behavior",
       "description": "Enable creatures to eat other entities based on their diet type.",
-      "status": "in-progress",
+      "status": "pending",
       "dependencies": [
         3,
         4,
@@ -77,7 +77,7 @@
       "id": 7,
       "title": "Develop Creature Reproduction System",
       "description": "Implement the ability for creatures to reproduce and create offspring.",
-      "status": "pending",
+      "status": "in-progress",
       "dependencies": [
         3,
         6

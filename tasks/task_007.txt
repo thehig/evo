@@ -1,6 +1,6 @@
 # Task ID: 7
 # Title: Develop Creature Reproduction System
-# Status: pending
+# Status: in-progress
 # Dependencies: 3, 6
 # Priority: medium
 # Description: Implement the ability for creatures to reproduce and create offspring.

@@ -6,6 +6,9 @@ export class Simulation {
   private isRunning: boolean = false;
   private tickCount: number = 0;
   private animationFrameId: number | null = null;
+  private lastTimestamp: number = 0;
+  public simulationSpeed: number = 100; // Milliseconds per tick
+  private newlyBornCreatures: Creature[] = []; // Added for reproduction
 
   constructor(grid: Grid, renderer: IRenderer) {
     this.grid = grid;
@@ -53,73 +56,103 @@ export class Simulation {
 
   // The main simulation step
   private step(): void {
-    if (!this.isRunning) {
-      return;
-    }
+    if (!this.isRunning) return;
 
-    this.tickCount++;
+    // console.log(`Tick: ${this.tickCount}`);
 
-    // Process creatures one by one
-    // Iterate over a copy of the array in case creatures die and are removed during the loop
-    const creatures = [...this.grid.getCreatures()];
+    const creatures = [...this.grid.getCreatures()]; // Operate on a copy for consistent behavior during the tick
+
+    // 1. Process existing creatures (energy, feeding, movement, reproduction attempts)
     for (const creature of creatures) {
-      // 1. Basic energy expenditure for existing
-      creature.energy -= 1; // Example cost: 1 unit per tick
+      // Base metabolic cost
+      creature.energy -= 1; // Example cost, can be tuned
 
-      // 2. Check for death (from existing cost or previous actions)
-      if (creature.energy <= 0) {
-        this.grid.removeEntity(creature);
-        continue; // Skip to next creature
+      // Decrement reproduction cooldown
+      if (creature.ticksUntilReadyToReproduce > 0) {
+        creature.ticksUntilReadyToReproduce--;
       }
 
-      // 3. Attempt to find food and eat
+      if (creature.energy <= 0) {
+        this.grid.removeEntity(creature);
+        // console.log(`Creature ${creature.symbol} died of starvation.`);
+        continue; // Skip further actions for this creature
+      }
+
       let ateThisTurn = false;
-      const foundFood = creature.findFood(this.grid); // Uses new Creature method
-
-      // Check for death again (from sensing cost in findFood)
-      if (creature.energy <= 0) {
-        // It's possible the creature died from the energy cost of findFood itself
-        // If it was already very low on energy.
-        // findFood already checks this, but if it returned null due to death,
-        // we still need to ensure removal if not already handled by findFood's internal check.
-        // However, findFood currently returns null if energy <=0 *after* deduction, so creature instance is still there.
-        this.grid.removeEntity(creature);
-        continue;
-      }
-
-      if (foundFood) {
-        if (creature.eat(foundFood, this.grid)) {
+      // Attempt to find and eat food in adjacent cells first
+      const foodFound = creature.findFood(this.grid);
+      if (foodFound) {
+        if (creature.eat(foodFound, this.grid)) {
+          // console.log(`Creature ${creature.symbol} ate ${foodFound.symbol}`);
           ateThisTurn = true;
         }
-        // Check for death again (from eating related costs, though eat() currently only adds energy)
-        // Or if eating failed but cost energy somehow (not current model of eat())
-        if (creature.energy <= 0) {
-          this.grid.removeEntity(creature);
-          continue;
-        }
       }
 
-      // 4. If didn't eat, attempt to move
+      // If didn't eat, try to move
       if (!ateThisTurn) {
-        const nextMove = creature.getNextMove();
-        if (nextMove) {
-          creature.energy -= 1; // Cost for attempting to move
-          const moved = this.grid.moveEntity(
-            creature,
-            nextMove.newX,
-            nextMove.newY
-          );
-          if (moved) {
-            creature.energy -= 2; // Additional cost for successful move
+        // Cost for attempting to move (even if no valid move is found or move fails)
+        creature.energy -= 1; // Example cost for thinking about moving
+        if (creature.energy <= 0) {
+          this.grid.removeEntity(creature);
+          // console.log(
+          //   `Creature ${creature.symbol} died after attempting to move.`
+          // );
+          continue;
+        }
+
+        const move = creature.getNextMove();
+        if (move) {
+          if (this.grid.moveEntity(creature, move.newX, move.newY)) {
+            // console.log(
+            //   `Creature ${creature.symbol} moved to (${move.newX}, ${move.newY})`
+            // );
+            // Cost for successful move
+            creature.energy -= 2; // Example cost, can be tuned
+            if (creature.energy <= 0) {
+              this.grid.removeEntity(creature);
+              // console.log(
+              //   `Creature ${creature.symbol} died after successful move.`
+              // );
+              continue;
+            }
+          } else {
+            // console.log(
+            //   `Creature ${creature.symbol} failed to move to (${move.newX}, ${move.newY})`
+            // );
           }
         }
       }
-      // Future actions: reproduce, more complex sensing, etc.
+
+      // Attempt reproduction
+      // Check energy again, as previous actions might have reduced it
+      if (creature.energy > 0) {
+        // Ensure creature is still alive
+        const offspring = creature.attemptReproduction(this.grid);
+        if (offspring) {
+          this.newlyBornCreatures.push(offspring);
+          // console.log(
+          //   `Creature ${creature.symbol} produced offspring ${offspring.symbol} at (${offspring.x}, ${offspring.y})`
+          // );
+        }
+      }
     }
 
-    // Other non-creature updates could go here (e.g., plant growth)
+    // 2. Add newly born creatures to the grid
+    // This is done after iterating through the original list of creatures
+    // to avoid modifying the list while iterating and to ensure they act next tick.
+    // Note: The `attemptReproduction` already adds the offspring to the grid if successful.
+    // So, we just need to clear the temporary list, or ensure they are part of the main entity list for next tick.
+    // The current `grid.addEntity` in `Creature.procreate` handles adding them to the grid's internal entity list.
+    // We might not need to explicitly add them here if `grid.getCreatures()` will pick them up next round.
+    // However, if `grid.getCreatures()` is based on a snapshot, we might need to ensure they are added to that snapshot source.
+    // For now, `grid.addEntity` should suffice. The `newlyBornCreatures` array can be used for logging or future batch operations.
+    if (this.newlyBornCreatures.length > 0) {
+      // console.log(`${this.newlyBornCreatures.length} offspring born this tick.`);
+      this.newlyBornCreatures = []; // Clear for next tick
+    }
 
-    this.renderer.render(this.grid); // Render the updated grid
+    this.tickCount++;
+    this.renderer.render(this.grid);
   }
 
   // Gameloop driven by requestAnimationFrame

@@ -72,6 +72,12 @@ export class Creature extends Entity {
   public perceptionAngle: number;
   public perceptionArc: number;
   public energy: number;
+  public seed: string;
+
+  public energyForReproduction: number = 150;
+  public energyCostOfReproduction: number = 50;
+  public reproductionCooldown: number = 20;
+  public ticksUntilReadyToReproduce: number = 0;
 
   constructor(
     symbol: string = "C",
@@ -86,7 +92,8 @@ export class Creature extends Entity {
     perceptionRange: number = 1,
     perceptionAngle: number = 0,
     perceptionArc: number = 45,
-    energy: number = 100
+    energy: number = 100,
+    seed: string = ""
   ) {
     super(symbol, color, type, x, y);
     this.dietType = dietType;
@@ -97,6 +104,7 @@ export class Creature extends Entity {
     this.perceptionAngle = perceptionAngle;
     this.perceptionArc = perceptionArc;
     this.energy = energy;
+    this.seed = seed;
   }
 
   static fromSeed(
@@ -159,8 +167,201 @@ export class Creature extends Entity {
       attributes.perceptionRange,
       attributes.perceptionAngle,
       attributes.perceptionArc,
-      initialEnergy
+      initialEnergy,
+      seed
     );
+  }
+
+  // Method to check if the creature can reproduce
+  public canReproduce(): boolean {
+    return (
+      this.energy >= this.energyForReproduction &&
+      this.ticksUntilReadyToReproduce <= 0
+    );
+  }
+
+  // Static method to combine seeds from two parents
+  static combineSeeds(seedA: string, seedB: string): string {
+    if (seedA.length !== seedB.length) {
+      // This case should ideally not happen if creatures are from compatible species
+      // or if seed length is standardized. For now, return a mix based on shorter length
+      // or error out. Let's assume they are the same length based on current seed structure.
+      console.error("Parent seeds have different lengths. This is unexpected.");
+      // Fallback: use seedA or implement a more robust mixing strategy
+      return seedA;
+    }
+    let offspringSeed = "";
+    for (let i = 0; i < seedA.length; i++) {
+      offspringSeed += Math.random() < 0.5 ? seedA[i] : seedB[i];
+    }
+    return offspringSeed;
+  }
+
+  // Static method to handle the creation and placement of an offspring
+  static procreate(
+    parentA: Creature,
+    parentB: Creature,
+    grid: Grid
+  ): Creature | null {
+    console.log(
+      "[Debug] procreate called by:",
+      parentA.symbol,
+      parentA.x,
+      parentA.y,
+      "&",
+      parentB.symbol,
+      parentB.x,
+      parentB.y
+    );
+    // 1. Combine parent seeds
+    const offspringSeed = Creature.combineSeeds(parentA.seed, parentB.seed);
+    console.log("[Debug] Offspring seed:", offspringSeed);
+
+    // 2. Create offspring (it won't have a position yet)
+    const offspringInitialEnergy = 100;
+    const offspring = Creature.fromSeed(
+      offspringSeed,
+      -1,
+      -1,
+      undefined,
+      undefined,
+      offspringInitialEnergy
+    );
+    console.log(
+      "[Debug] Offspring created:",
+      offspring ? offspring.symbol : "null"
+    );
+
+    if (!offspring) {
+      console.error(
+        "[Debug] Failed to create offspring from seed:",
+        offspringSeed
+      );
+      return null;
+    }
+
+    // 3. Attempt to find an empty adjacent cell for placement
+    let placed = false;
+    let offspringX = -1;
+    let offspringY = -1;
+
+    const placementAttempts = [
+      { parent: parentA, name: "parentA" },
+      { parent: parentB, name: "parentB" },
+    ];
+
+    for (const attempt of placementAttempts) {
+      const adjacentOffsets = [
+        { dx: 0, dy: -1 }, // North
+        { dx: 1, dy: 0 }, // East
+        { dx: 0, dy: 1 }, // South
+        { dx: -1, dy: 0 }, // West
+        { dx: -1, dy: -1 }, // NW
+        { dx: 1, dy: -1 }, // NE
+        { dx: -1, dy: 1 }, // SW
+        { dx: 1, dy: 1 }, // SE
+      ];
+      // Shuffle offsets to make placement less deterministic
+      for (let i = adjacentOffsets.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [adjacentOffsets[i], adjacentOffsets[j]] = [
+          adjacentOffsets[j],
+          adjacentOffsets[i],
+        ];
+      }
+
+      for (const offset of adjacentOffsets) {
+        const x = attempt.parent.x + offset.dx;
+        const y = attempt.parent.y + offset.dy;
+        console.log(
+          `[Debug] Attempting placement for offspring at ${x},${y} around ${attempt.name}`
+        );
+        if (grid.isValidPosition(x, y)) {
+          const cellContent = grid.getCell(x, y);
+          console.log(
+            `[Debug] Cell ${x},${y} content:`,
+            cellContent ? cellContent.symbol : "null"
+          );
+          if (cellContent === null) {
+            offspringX = x;
+            offspringY = y;
+            const addResult = grid.addEntity(offspring, offspringX, offspringY);
+            console.log(
+              `[Debug] grid.addEntity to ${x},${y} result:`,
+              addResult
+            );
+            if (addResult) {
+              placed = true;
+              console.log("[Debug] Offspring placed successfully.");
+              break;
+            } else {
+              console.error(
+                `[Debug] Failed to add offspring at ${x},${y} even if cell was reported null.`
+              );
+            }
+          }
+        } else {
+          console.log(`[Debug] Position ${x},${y} is invalid.`);
+        }
+      }
+      if (placed) break;
+    }
+
+    if (!placed) {
+      console.log("[Debug] No space to place offspring around parents.");
+      return null;
+    }
+
+    parentA.energy -= parentA.energyCostOfReproduction;
+    parentB.energy -= parentB.energyCostOfReproduction;
+    parentA.ticksUntilReadyToReproduce = parentA.reproductionCooldown;
+    parentB.ticksUntilReadyToReproduce = parentB.reproductionCooldown;
+
+    return offspring;
+  }
+
+  // Instance method for a creature to attempt reproduction
+  public attemptReproduction(grid: Grid): Creature | null {
+    if (!this.canReproduce()) {
+      return null;
+    }
+
+    const adjacentOffsets = [
+      { dx: 0, dy: -1 },
+      { dx: 1, dy: 0 },
+      { dx: 0, dy: 1 },
+      { dx: -1, dy: 0 }, // Cardinal
+      { dx: -1, dy: -1 },
+      { dx: 1, dy: -1 },
+      { dx: -1, dy: 1 },
+      { dx: 1, dy: 1 }, // Diagonal
+    ];
+
+    for (const offset of adjacentOffsets) {
+      const mateX = this.x + offset.dx;
+      const mateY = this.y + offset.dy;
+      const potentialMateEntity = grid.getCell(mateX, mateY);
+
+      if (
+        potentialMateEntity &&
+        potentialMateEntity instanceof Creature &&
+        potentialMateEntity !== this && // Cannot mate with oneself
+        potentialMateEntity.canReproduce()
+      ) {
+        const mate = potentialMateEntity as Creature;
+        // Both this creature and the mate are ready and capable.
+        // Call the static procreate method.
+        const offspring = Creature.procreate(this, mate, grid);
+        if (offspring) {
+          // console.log(`Offspring ${offspring.symbol} created at ${offspring.x},${offspring.y}`);
+          return offspring;
+        } else {
+          // Procreation attempt failed (e.g. no space, or seed error)
+          // console.log("Procreation attempt failed."); // Can be noisy
+        }
+      }
+    }
+    return null; // No suitable mate found or procreation failed
   }
 
   public eat(target: IEntity, grid: Grid): boolean {
