@@ -1,22 +1,16 @@
-import {
-  jest,
-  describe,
-  it,
-  expect,
-  beforeEach,
-  afterEach,
-} from "@jest/globals"; // Added for Jest globals
-import { Grid, Rock, Plant, Creature, Entity, Water } from "./grid"; // Import from ./grid.ts
+import { vi, describe, it, expect, beforeEach, afterEach } from "vitest"; // Added Vitest imports
+// import { jest, describe, it, expect, beforeEach, afterEach } from "@jest/globals"; // Removed for Vitest
+import { Grid, Rock, Plant, Creature, Entity, Water } from "../src/grid"; // Adjusted import path
 
 // Mock console.error to prevent log spamming
-let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
-let consoleLogSpy: jest.SpiedFunction<typeof console.log>; // Added for console.log
+let consoleErrorSpy: ReturnType<typeof vi.spyOn>; // Replaced jest.SpiedFunction
+let consoleLogSpy: ReturnType<typeof vi.spyOn>; // Replaced jest.SpiedFunction
 let grid: Grid; // Declare grid here
 
 beforeEach(() => {
   grid = new Grid(3, 2); // Test with a 3x2 grid
-  consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
-  consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {}); // Mock console.log
+  consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {}); // Replaced jest.spyOn
+  consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {}); // Replaced jest.spyOn
 });
 
 afterEach(() => {

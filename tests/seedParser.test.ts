@@ -1,21 +1,14 @@
-import {
-  jest,
-  describe,
-  beforeEach,
-  afterEach,
-  expect,
-  it,
-} from "@jest/globals";
-import { parseSeed, CreatureAttributes } from "./seedParser";
-import { Creature, DietType, ActivityCycle, PerceptionType } from "./grid";
+import { parseSeed, CreatureAttributes } from "../src/seedParser";
+import { Creature, DietType, ActivityCycle, PerceptionType } from "../src/grid";
+import { vi } from "vitest";
 
 // Mock console.error to prevent log spamming
-let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
-let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
+let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+let consoleLogSpy: ReturnType<typeof vi.spyOn>;
 
 beforeEach(() => {
-  consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
-  consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+  consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 });
 
 afterEach(() => {
