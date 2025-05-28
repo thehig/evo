@@ -451,7 +451,10 @@ describe("SensorySystem", () => {
         0.3
       );
 
-      const inputs = sensorySystem.convertToNeuralInputs(sensoryData);
+      const inputs = sensorySystem.convertToNeuralInputs(
+        sensoryData,
+        memoryConfig
+      );
 
       expect(inputs).toBeDefined();
       expect(inputs.length).toBeGreaterThan(0);

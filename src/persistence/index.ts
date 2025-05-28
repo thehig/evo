@@ -11,6 +11,9 @@ export * from "./types";
 export * from "./browser-persistence";
 export { BrowserPersistenceManager as PersistenceManager } from "./index.browser";
 
+// Export factory functions for testing and Node.js environments
+export * from "./factory";
+
 // Version information
 export const PERSISTENCE_MODULE_VERSION = "0.1.0";
 

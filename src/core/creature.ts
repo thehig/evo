@@ -184,8 +184,11 @@ export class Creature implements ICreature {
 
     this._lastSensoryData = sensoryData;
 
-    // Convert sensory data to neural network input
-    const inputs = this._sensorySystem.convertToNeuralInputs(sensoryData);
+    // Convert sensory data to neural network input with memory configuration for consistent sizing
+    const inputs = this._sensorySystem.convertToNeuralInputs(
+      sensoryData,
+      this._config.memory
+    );
 
     // Process through neural network
     this._lastOutput = this._brain.process(inputs);

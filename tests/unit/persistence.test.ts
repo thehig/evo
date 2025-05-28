@@ -14,6 +14,10 @@ import {
   DataType,
   FileFormat,
   ISerializable,
+} from "../../src/persistence";
+
+// Import Node.js-specific utility functions directly from utils
+import {
   calculateChecksum,
   getCurrentTimestamp,
   getFileExtension,
@@ -21,7 +25,7 @@ import {
   normalizePath,
   compareVersions,
   parseVersion,
-} from "../../src/persistence";
+} from "../../src/persistence/utils";
 
 // Test data class that implements ISerializable
 class TestData implements ISerializable {

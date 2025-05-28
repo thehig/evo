@@ -393,7 +393,10 @@ export class SensorySystem {
   /**
    * Convert sensory data to neural network inputs
    */
-  convertToNeuralInputs(sensoryData: ISensoryData): number[] {
+  convertToNeuralInputs(
+    sensoryData: ISensoryData,
+    memoryConfig?: MemoryConfig
+  ): number[] {
     const inputs: number[] = [];
 
     // Basic creature state
@@ -413,20 +416,59 @@ export class SensorySystem {
       inputs.push(cell.signalStrength);
     }
 
-    // Memory data
-    inputs.push(...sensoryData.memory.recentEnergyChanges);
+    // Memory data - pad arrays to expected size if memoryConfig is provided
+    if (memoryConfig) {
+      // Energy changes - pad to (energyHistorySize - 1)
+      const energyChanges = [...sensoryData.memory.recentEnergyChanges];
+      const expectedEnergyChanges = memoryConfig.energyHistorySize - 1;
+      while (energyChanges.length < expectedEnergyChanges) {
+        energyChanges.push(0.0); // Pad with zeros
+      }
+      inputs.push(...energyChanges);
 
-    // Encode recent actions as numbers
-    for (const action of sensoryData.memory.recentActions) {
-      inputs.push(this.encodeAction(action));
+      // Recent actions - pad to actionHistorySize
+      const recentActions = [...sensoryData.memory.recentActions];
+      const expectedActionCount = memoryConfig.actionHistorySize;
+      while (recentActions.length < expectedActionCount) {
+        recentActions.push(CreatureAction.REST); // Pad with REST action
+      }
+      for (const action of recentActions) {
+        inputs.push(this.encodeAction(action));
+      }
+
+      // Recent encounters - pad to encounterHistorySize
+      const recentEncounters = [...sensoryData.memory.recentEncounters];
+      const expectedEncounterCount = memoryConfig.encounterHistorySize;
+      while (recentEncounters.length < expectedEncounterCount) {
+        recentEncounters.push(EntityType.EMPTY); // Pad with EMPTY
+      }
+      for (const encounter of recentEncounters) {
+        inputs.push(this.encodeEntityType(encounter));
+      }
+
+      // Recent signals - pad to signalHistorySize
+      const recentSignals = [...sensoryData.memory.recentSignals];
+      const expectedSignalCount = memoryConfig.signalHistorySize;
+      while (recentSignals.length < expectedSignalCount) {
+        recentSignals.push(0.0); // Pad with zeros
+      }
+      inputs.push(...recentSignals);
+    } else {
+      // Fallback to original behavior if no config provided
+      inputs.push(...sensoryData.memory.recentEnergyChanges);
+
+      // Encode recent actions as numbers
+      for (const action of sensoryData.memory.recentActions) {
+        inputs.push(this.encodeAction(action));
+      }
+
+      // Encode recent encounters
+      for (const encounter of sensoryData.memory.recentEncounters) {
+        inputs.push(this.encodeEntityType(encounter));
+      }
+
+      inputs.push(...sensoryData.memory.recentSignals);
     }
-
-    // Encode recent encounters
-    for (const encounter of sensoryData.memory.recentEncounters) {
-      inputs.push(this.encodeEntityType(encounter));
-    }
-
-    inputs.push(...sensoryData.memory.recentSignals);
 
     return inputs;
   }
