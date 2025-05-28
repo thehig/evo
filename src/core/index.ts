@@ -7,10 +7,12 @@
 
 // Interfaces
 export * from "./interfaces";
+export * from "./creature-types";
 
 // Implementations
 export { Random } from "./random";
 export { EventSystem, SimulationEvents } from "./events";
 export { SimulationEngine } from "./simulation-engine";
+export { Creature } from "./creature";
 
 export const CORE_MODULE_VERSION = "0.1.0";
