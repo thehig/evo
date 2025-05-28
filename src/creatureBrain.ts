@@ -1,5 +1,5 @@
-import { NeuralNetwork, NeuralNetworkGenerator } from "./neuralNetwork";
-import { Grid, Creature, IEntity, DietType } from "./grid";
+import { NeuralNetwork, NeuralNetworkGenerator } from "./neuralNetwork.js";
+import { Grid, Creature, IEntity, DietType } from "./grid.js";
 
 export interface SensoryInput {
   // Vision inputs (8 directions + distance)

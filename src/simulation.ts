@@ -1,4 +1,4 @@
-import { Grid, Creature, type IRenderer } from "./grid";
+import { Grid, Creature, type IRenderer } from "./grid.js";
 
 export class Simulation {
   private grid: Grid;

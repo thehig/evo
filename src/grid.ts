@@ -1,5 +1,5 @@
 import p5 from "p5";
-import { CreatureBrain } from "./creatureBrain";
+import { CreatureBrain } from "./creatureBrain.js";
 
 export enum DietType {
   HERBIVORE = "Herbivore",
@@ -62,7 +62,7 @@ export class Water extends Entity {
   }
 }
 
-import { parseSeed } from "./seedParser";
+import { parseSeed } from "./seedParser.js";
 
 export class Creature extends Entity {
   public dietType: DietType;

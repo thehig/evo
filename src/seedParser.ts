@@ -1,4 +1,4 @@
-import { DietType, ActivityCycle, PerceptionType } from "./grid";
+import { DietType, ActivityCycle, PerceptionType } from "./grid.js";
 
 export interface CreatureAttributes {
   dietType: DietType;

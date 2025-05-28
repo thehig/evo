@@ -1,6 +1,6 @@
-import { Creature, DietType, ActivityCycle, PerceptionType } from "./grid";
-import { CreatureBrain } from "./creatureBrain";
-import { NeuralNetworkGenerator } from "./neuralNetwork";
+import { Creature, DietType, ActivityCycle, PerceptionType } from "./grid.js";
+import { CreatureBrain } from "./creatureBrain.js";
+import { NeuralNetworkGenerator } from "./neuralNetwork.js";
 
 export class CreatureFactory {
   static createRandomCreature(x: number = -1, y: number = -1): Creature {
