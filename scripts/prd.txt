@@ -1,0 +1,442 @@
+# Neural Evolution Simulator - Product Requirements Document
+
+## Executive Summary
+
+Neural Evolution Simulator is a two-part evolutionary simulation game where creatures controlled by neural networks evolve through genetic algorithms. The system consists of a Training Simulator for species development and a World Simulator for large-scale ecosystem interactions.
+
+## Development Philosophy
+
+### Test-Driven Development (TDD)
+- **Core Architecture Testing**: All creature behavior, neural network processing, and simulation logic will be developed using test-driven development
+- **Grammar-First Approach**: Tests will define the expected API and behavior patterns before implementation
+- **Simulation Logic Focus**: TDD applies to creatures, neural networks, genetic algorithms, and simulation engine (UI excluded)
+- **Behavioral Verification**: Tests will verify deterministic behavior, genetic algorithm convergence, and ecosystem dynamics
+- **Regression Prevention**: Comprehensive test suite ensures changes don't break existing functionality
+
+### Technology Stack
+- **TypeScript**: Primary development language for type safety and maintainability
+- **Vite**: Build tool and development server for fast iteration and hot module replacement
+- **Game Library Integration**: Prepared for integration with game frameworks
+  - **PhaserJS**: Potential choice for WebGL-based rendering and sprite management
+  - **P5.js**: Alternative option for creative coding and visualization
+  - **Modular Design**: Renderer interface allows switching between game libraries
+- **Node.js**: Runtime for headless simulation and testing environments
+- **Testing Framework**: Vitest (Vite-native) for unit and integration testing
+
+### Platform Requirements
+- **Windows-First Development**: Primary development and testing on Windows platform
+- **Windows Path Conventions**: Use Windows-style paths (backslashes) throughout codebase
+- **Line Ending Consistency**: CRLF line endings for all text files
+- **Windows-Specific Optimizations**: Leverage Windows-specific performance features where beneficial
+- **Cross-Platform Compatibility**: Ensure simulation logic works across platforms while optimizing for Windows
+
+### Renderer Independence
+- **Decoupled Architecture**: Simulation engine operates independently of any rendering system
+- **Multiple Renderer Support**: 
+  - Browser-based with sprites and WebGL (PhaserJS/P5.js)
+  - Console ASCII art renderer
+  - Headless mode with no visual output
+- **Snapshot-Based Interaction**: Primary interaction through world state snapshots
+- **Renderer Interface**: Standardized interface allows pluggable rendering systems
+- **Performance Isolation**: Rendering performance doesn't impact simulation speed
+
+### Robust Persistence System
+- **Comprehensive Save/Load**: Support for creatures, worlds, populations, neural networks, and complete simulation states
+- **Foundational to Testing**: Load/save system enables test scenario creation and verification
+- **Version Compatibility**: Forward and backward compatibility for save files
+- **Incremental Snapshots**: Efficient storage of world state changes over time
+- **Data Integrity**: Checksums and validation ensure save file reliability
+
+## Core Concepts
+
+### Neural Network Creatures
+- **Deterministic Behavior**: Given identical neural network weights and environmental inputs, creatures will always behave identically
+- **Simple Architecture**: Lightweight neural networks optimized for real-time simulation
+- **Genetic Evolution**: Neural network weights evolve through genetic algorithms across generations
+
+### Genetic Algorithm Framework
+- **Selection**: Survivors and successful reproducers pass genes to next generation
+- **Mutation**: Random weight modifications introduce genetic variation
+- **Crossover**: Successful creatures can combine genetic material
+- **Fitness Evaluation**: Based on survival time, reproduction success, and resource acquisition
+
+## Part 1: Training Simulator
+
+### Purpose
+Develop and evolve creature species in controlled environments through iterative genetic algorithm cycles.
+
+### Core Features
+
+#### Scenario Management
+- **World Import**: Load predefined world scenarios (terrain, resources, obstacles)
+- **Initial Population**: Generate random creatures with randomized neural networks
+- **Environment Configuration**: Set world size, resource distribution, obstacle placement
+
+#### Simulation Engine
+- **Tick-Based Processing**: Discrete time steps for deterministic behavior
+- **Energy System**: All actions consume energy; starvation leads to death
+- **Interaction Resolution**: Handle creature-environment and creature-creature interactions
+- **Performance Monitoring**: Track population statistics, survival rates, behavior patterns
+
+#### Genetic Algorithm Cycle
+1. **Initial Generation**: Create random population with varied neural networks
+2. **Simulation Run**: Execute N ticks of survival simulation
+3. **Fitness Evaluation**: Rank creatures by survival time, reproduction, resource gathering
+4. **Selection**: Choose top performers as breeding stock
+5. **Reproduction**: Generate next generation through mutation and crossover
+6. **Iteration**: Repeat cycle with evolved population
+
+#### Training Analytics
+- **Generation Tracking**: Monitor evolutionary progress across iterations
+- **Behavior Analysis**: Identify emerging strategies and adaptations
+- **Performance Metrics**: Survival rates, energy efficiency, reproduction success
+- **Neural Network Visualization**: Display evolved network structures and weights
+
+## Part 2: World Simulator
+
+### Purpose
+Large-scale ecosystem simulation where evolved species interact in complex environments.
+
+### Core Features
+
+#### Massive World Scale
+- **Large Grid System**: Support for worlds 100x-1000x larger than training scenarios
+- **Chunk-Based Loading**: Efficient memory management for large worlds
+- **Biome Diversity**: Multiple environment types with different challenges
+
+#### Species Introduction
+- **Import Evolved Species**: Load successful species from Training Simulator
+- **Population Seeding**: Introduce species at appropriate locations and densities
+- **Genetic Diversity**: Maintain genetic variation within introduced populations
+
+#### Complex Ecosystem Dynamics
+- **Multi-Species Interactions**: Predator-prey relationships, competition, symbiosis
+- **Resource Cycles**: Renewable resources, seasonal variations, scarcity events
+- **Environmental Pressures**: Climate changes, disasters, habitat modifications
+
+#### Long-Term Evolution
+- **Continued Evolution**: Species continue evolving in response to ecosystem pressures
+- **Speciation**: Populations may diverge into distinct species over time
+- **Extinction Events**: Species may go extinct due to environmental changes
+
+## Neural Network Architecture
+
+### Input Layer (Environmental Sensors)
+- **Energy Level**: Current creature energy (0.0-1.0 normalized)
+- **Time of Day**: Circadian cycle position (0.0-1.0)
+- **Spatial Sensors**: Grid-based sensory inputs for surrounding area
+  - **Vision Range**: 3x3, 5x5, or 7x7 grid around creature
+  - **Entity Detection**: Friend/enemy/neutral/food/obstacle classification
+  - **Distance Encoding**: Proximity information for detected entities
+- **Communication Sensors**: Detect signals from other creatures
+- **Internal State**: Hunger, fatigue, reproductive readiness
+- **Memory Inputs**: Simple short-term memory of recent experiences
+
+### Output Layer (Action Selection)
+- **Movement Actions**: 8-directional movement (N, NE, E, SE, S, SW, W, NW)
+- **Rest/Sleep**: Energy conservation action
+- **Communication**: Emit signal to surrounding area (costs energy)
+- **Special Actions**: Context-dependent actions based on current cell contents
+
+### Network Architecture
+- **Hidden Layers**: 1-2 hidden layers with 8-16 neurons each
+- **Activation Functions**: Sigmoid or ReLU for deterministic behavior
+- **Weight Range**: Constrained to prevent extreme behaviors
+- **Bias Neurons**: Allow for baseline behavioral tendencies
+
+## Game Mechanics
+
+### Energy System
+- **Base Metabolism**: Continuous energy drain for staying alive
+- **Action Costs**: Different actions consume different amounts of energy
+  - Movement: 2-5 energy depending on terrain
+  - Communication: 3-8 energy depending on signal strength
+  - Fighting: 5-15 energy depending on aggression level
+  - Reproduction: 20-50 energy for successful mating
+- **Energy Sources**: Food consumption, rest/sleep recovery
+- **Death Condition**: Energy reaches zero
+
+### Interaction Matrix
+
+#### Movement into Occupied Squares
+- **Food Entities**: Attempt to eat, gain energy, remove food
+- **Friendly Creatures**: Attempt reproduction if conditions met
+- **Enemy Creatures**: Initiate combat, winner gains energy/territory
+- **Neutral Creatures**: Social interaction, potential alliance formation
+- **Obstacles (Rocks)**: Movement blocked, no energy cost
+- **Water**: Movement allowed, different energy cost
+- **Terrain Variations**: Different movement costs for different terrain types
+
+#### Combat System
+- **Energy-Based**: Creatures with higher energy have combat advantage
+- **Neural Network Decisions**: Aggression level determined by NN output
+- **Outcomes**: Winner gains energy, loser loses energy or dies
+- **Retreat Option**: Creatures can attempt to flee combat
+
+#### Reproduction System
+- **Energy Threshold**: Minimum energy required for reproduction
+- **Genetic Combination**: Offspring inherit traits from both parents
+- **Mutation Rate**: Configurable chance for genetic variation
+- **Gestation**: Time delay before offspring become active
+
+### Communication System
+- **Signal Grid**: Secondary overlay grid for communication signals
+- **Signal Types**: Different frequencies/types for different messages
+- **Signal Decay**: Signals fade over time and distance
+- **Energy Cost**: Stronger signals cost more energy
+- **Signal Detection**: Creatures can sense signals in their sensor range
+
+### Sensory System
+- **Vision Range**: Configurable sensor radius (3x3 to 7x7 grid)
+- **Entity Classification**: 
+  - Same species (friendly)
+  - Different species (neutral/enemy based on learned behavior)
+  - Food sources (plants, corpses)
+  - Obstacles (rocks, water, terrain features)
+  - Environmental hazards
+- **Signal Detection**: Receive communication signals from other creatures
+- **Memory Integration**: Combine current sensors with short-term memory
+
+## Technical Requirements
+
+### Architecture Principles
+- **Separation of Concerns**: Clear boundaries between simulation logic, data persistence, and rendering
+- **Testability**: All core components designed for comprehensive unit and integration testing
+- **Deterministic Core**: Simulation engine produces identical results given identical inputs
+- **Modular Design**: Components can be developed, tested, and deployed independently
+
+### Performance Specifications
+- **Training Simulator**: Support 100-500 creatures simultaneously
+- **World Simulator**: Support 1000-10000 creatures across large world
+- **Simulation Speed**: Configurable tick rate (1-100 ticks per second)
+- **Memory Efficiency**: Optimize for large-scale simulations
+
+### Data Management and Persistence
+
+#### Save/Load System Architecture
+- **Hierarchical Storage**: Organized file structure for different data types
+  - `C:\SimData\Creatures\` - Individual creature genomes and neural networks
+  - `C:\SimData\Worlds\` - World definitions and terrain data
+  - `C:\SimData\Snapshots\` - Complete simulation state captures
+  - `C:\SimData\Scenarios\` - Training scenarios and test cases
+  - `C:\SimData\Species\` - Evolved species definitions and lineages
+
+#### File Format Specifications
+- **Binary Formats**: Efficient storage for neural network weights and large world data
+- **JSON Formats**: Human-readable configuration and metadata files
+- **Compression**: Automatic compression for large snapshot files
+- **Checksums**: Data integrity verification for all save files
+
+#### Snapshot System
+- **Complete State Capture**: Save entire simulation state including:
+  - All creature positions, energy levels, and neural network states
+  - World terrain and resource distribution
+  - Communication signal states
+  - Random number generator seeds for reproducibility
+- **Incremental Snapshots**: Delta-based storage for efficient long-term simulation recording
+- **Snapshot Metadata**: Timestamp, generation number, population statistics
+- **Snapshot Validation**: Verify snapshot integrity before loading
+
+#### Version Management
+- **Schema Versioning**: Track file format versions for compatibility
+- **Migration Tools**: Automatic upgrade of older save files
+- **Backward Compatibility**: Support loading files from previous versions
+- **Export Formats**: Standard formats for data exchange and analysis
+
+### Renderer Interface Design
+
+#### Core Renderer Interface
+```typescript
+interface IRenderer {
+  initialize(config: RenderConfig): void;
+  render(snapshot: WorldSnapshot): void;
+  cleanup(): void;
+  getCapabilities(): RendererCapabilities;
+}
+```
+
+#### Renderer Implementations
+- **WebGL Renderer**: High-performance browser-based visualization
+- **ASCII Renderer**: Console-based text visualization
+- **Null Renderer**: Headless mode for testing and batch processing
+- **Debug Renderer**: Specialized renderer for development and debugging
+
+#### Snapshot-Based Communication
+- **WorldSnapshot**: Complete world state at a specific tick
+- **CreatureSnapshot**: Individual creature state and neural network activation
+- **EnvironmentSnapshot**: Terrain, resources, and environmental conditions
+- **CommunicationSnapshot**: Active signals and communication patterns
+
+### User Interface Requirements
+
+#### Training Simulator UI
+- **World View**: Real-time visualization of simulation
+- **Control Panel**: Start/stop/pause simulation, adjust parameters
+- **Generation Tracker**: Display current generation and evolution progress
+- **Statistics Dashboard**: Population metrics, survival rates, behavior analysis
+- **Neural Network Viewer**: Visualize creature neural networks
+- **Scenario Editor**: Create and modify training scenarios
+
+#### World Simulator UI
+- **Large World Navigation**: Zoom, pan, minimap for large worlds
+- **Species Management**: Monitor multiple species populations
+- **Ecosystem Analytics**: Biome health, resource distribution, population dynamics
+- **Time Controls**: Speed up/slow down simulation, pause at events
+- **Event Notifications**: Alert user to significant ecosystem changes
+
+### File Formats and Data Structures
+
+#### Scenario Definition
+```json
+{
+  "name": "Training Scenario 1",
+  "dimensions": {"width": 50, "height": 50},
+  "terrain": "grid_data",
+  "resources": [
+    {"type": "plant", "distribution": "scattered", "density": 0.1}
+  ],
+  "obstacles": [
+    {"type": "rock", "positions": [[10,10], [15,20]]}
+  ],
+  "initial_creatures": 20,
+  "simulation_ticks": 1000,
+  "save_path": "C:\\SimData\\Scenarios\\training_scenario_1.json"
+}
+```
+
+#### Neural Network Genome
+```json
+{
+  "species_id": "evolved_herbivore_v1",
+  "generation": 45,
+  "fitness_score": 0.87,
+  "network": {
+    "input_size": 25,
+    "hidden_layers": [16, 12],
+    "output_size": 10,
+    "weights": "compressed_weight_data",
+    "biases": "bias_data"
+  },
+  "traits": {
+    "aggression": 0.2,
+    "social": 0.8,
+    "exploration": 0.6
+  },
+  "file_path": "C:\\SimData\\Creatures\\evolved_herbivore_v1_gen45.json"
+}
+```
+
+#### World Snapshot Format
+```json
+{
+  "timestamp": "2024-01-15T10:30:00Z",
+  "tick": 15420,
+  "world_id": "training_world_001",
+  "dimensions": {"width": 50, "height": 50},
+  "creatures": [
+    {
+      "id": "creature_001",
+      "species": "evolved_herbivore_v1",
+      "position": {"x": 25, "y": 30},
+      "energy": 85.5,
+      "neural_state": "compressed_activation_data"
+    }
+  ],
+  "environment": {
+    "terrain": "compressed_terrain_data",
+    "resources": "compressed_resource_data",
+    "signals": "compressed_signal_data"
+  },
+  "metadata": {
+    "generation": 45,
+    "population_size": 127,
+    "average_fitness": 0.73
+  },
+  "file_path": "C:\\SimData\\Snapshots\\training_world_001_tick_15420.json"
+}
+```
+
+### Testing Framework
+
+#### Test Categories
+- **Unit Tests**: Individual component behavior (neural networks, genetic algorithms, creature actions)
+- **Integration Tests**: Component interaction (creature-environment, reproduction, combat)
+- **Scenario Tests**: Complete simulation scenarios with expected outcomes
+- **Performance Tests**: Scalability and performance benchmarks
+- **Determinism Tests**: Verify identical results from identical inputs
+
+#### Test Data Management
+- **Test Scenarios**: Predefined world states for consistent testing
+- **Reference Snapshots**: Known-good simulation states for comparison
+- **Genetic Test Cases**: Specific neural network configurations for behavior testing
+- **Performance Baselines**: Benchmark data for performance regression detection
+
+#### Continuous Integration
+- **Automated Testing**: Run full test suite on every code change
+- **Performance Monitoring**: Track simulation performance over time
+- **Determinism Verification**: Ensure simulation remains deterministic across platforms
+- **Save/Load Validation**: Verify data persistence integrity
+
+## Success Metrics
+
+### Training Simulator
+- **Evolution Progress**: Measurable improvement in fitness scores across generations
+- **Behavioral Diversity**: Emergence of different survival strategies
+- **Convergence Time**: Generations required to reach stable, successful behaviors
+- **Reproducibility**: Consistent results from identical starting conditions
+
+### World Simulator
+- **Ecosystem Stability**: Sustainable population levels across multiple species
+- **Emergent Behaviors**: Complex interactions not explicitly programmed
+- **Long-term Viability**: Species survival over extended simulation periods
+- **Scalability**: Performance with large populations and world sizes
+
+### Technical Success Metrics
+- **Test Coverage**: >90% code coverage for simulation logic
+- **Performance Consistency**: <5% variance in simulation speed across runs
+- **Save/Load Reliability**: 100% success rate for save/load operations
+- **Determinism Verification**: Identical results across multiple platforms
+
+## Future Enhancements
+
+### Advanced Features
+- **Multi-Objective Evolution**: Optimize for multiple fitness criteria simultaneously
+- **Environmental Challenges**: Dynamic weather, seasonal changes, natural disasters
+- **Tool Use**: Creatures learn to manipulate environment objects
+- **Social Structures**: Pack behavior, hierarchies, cooperation strategies
+- **Migration Patterns**: Seasonal movement between biomes
+
+### Technical Improvements
+- **GPU Acceleration**: Parallel processing for large-scale simulations
+- **Machine Learning Integration**: Use ML to analyze and predict evolutionary outcomes
+- **VR/AR Support**: Immersive viewing of creature worlds
+- **Cloud Simulation**: Distributed processing for massive worlds
+
+### Community Features
+- **Species Sharing**: Upload/download evolved species
+- **Tournament Mode**: Compete evolved species against others
+- **Collaborative Evolution**: Multiple users contribute to species development
+- **Research Tools**: Academic analysis and publication features
+
+## Risk Assessment
+
+### Technical Risks
+- **Performance Bottlenecks**: Large simulations may exceed hardware capabilities
+- **Genetic Stagnation**: Populations may converge to local optima
+- **Determinism Issues**: Floating-point precision may affect reproducibility
+- **Save File Corruption**: Data loss could impact long-term experiments
+
+### Mitigation Strategies
+- **Scalable Architecture**: Design for horizontal scaling and optimization
+- **Diversity Maintenance**: Implement mechanisms to preserve genetic diversity
+- **Precision Control**: Use fixed-point arithmetic for critical calculations
+- **Redundant Storage**: Multiple backup systems for critical save data
+- **Comprehensive Testing**: Extensive test coverage to prevent regressions
+
+## Conclusion
+
+Neural Evolution Simulator represents an ambitious fusion of artificial intelligence, evolutionary biology, and interactive simulation. By providing both focused training environments and expansive world simulations, the system enables deep exploration of emergent behaviors and evolutionary dynamics. The deterministic neural network approach ensures reproducible results while the genetic algorithm framework drives continuous adaptation and improvement.
+
+The test-driven development approach ensures robust, reliable simulation logic, while the renderer-independent architecture provides flexibility for different visualization needs. The comprehensive save/load system enables both scientific reproducibility and engaging long-term experiments.
+
+The two-part structure allows users to develop specialized species in controlled environments before releasing them into complex ecosystems, creating opportunities for both scientific exploration and entertainment. Success will be measured by the emergence of sophisticated behaviors, stable ecosystem dynamics, and the system's ability to surprise users with unexpected evolutionary outcomes. 
