@@ -444,7 +444,7 @@ calculateDamage(attacker: Creature, defender: Creature, actionType: CombatAction
 </info added on 2025-06-15T14:22:45.000Z>
 </info added on 2025-05-28T21:38:04.057Z>
 
-## 3. Implement Food Consumption and Terrain Interaction Mechanics [pending]
+## 3. Implement Food Consumption and Terrain Interaction Mechanics [done]
 ### Dependencies: 11.1
 ### Description: Create systems for creatures to interact with food sources and different terrain types.
 ### Details:
@@ -455,6 +455,339 @@ calculateDamage(attacker: Creature, defender: Creature, actionType: CombatAction
 5. Implement terrain-specific effects (damage, healing, energy drain/boost).
 6. Create detection systems for creatures to locate food sources within their perception range.
 7. Testing approach: Place creatures in environments with various food sources and terrain types, then verify they interact appropriately with each element according to their defined behaviors.
+
+<info added on 2025-05-28T21:39:57.508Z>
+## Implementation Details:
+
+### Food Consumption System
+```typescript
+// Example ResourceInteractionSystem implementation
+class ResourceInteractionSystem {
+  // Maps creature types to compatible food sources and energy values
+  private foodCompatibilityMap: Map<CreatureType, Map<FoodType, number>> = new Map();
+  
+  consumeResource(creature: Creature, foodSource: FoodSource): boolean {
+    const compatibilityMap = this.foodCompatibilityMap.get(creature.type);
+    if (!compatibilityMap || !compatibilityMap.has(foodSource.type)) {
+      return false; // Incompatible food source
+    }
+    
+    const energyGain = compatibilityMap.get(foodSource.type) || 0;
+    const consumed = foodSource.deplete(1); // Try to consume 1 unit
+    
+    if (consumed) {
+      creature.energy += energyGain;
+      return true;
+    }
+    return false;
+  }
+}
+```
+
+### Terrain Effects Implementation
+```typescript
+// Terrain movement modifiers
+const terrainSpeedModifiers = {
+  WATER: 0.5,  // 50% slower in water
+  MUD: 0.7,    // 30% slower in mud
+  GRASS: 1.0,  // Normal speed
+  ROAD: 1.2    // 20% faster on roads
+};
+
+// Example terrain effect implementation
+function applyTerrainEffects(creature: Creature, terrain: TerrainType, deltaTime: number): void {
+  switch(terrain) {
+    case TerrainType.LAVA:
+      creature.health -= 5 * deltaTime; // Damage over time
+      break;
+    case TerrainType.HEALING_SPRING:
+      creature.health += 2 * deltaTime; // Healing over time
+      creature.health = Math.min(creature.health, creature.maxHealth);
+      break;
+    case TerrainType.ENERGY_DRAIN:
+      creature.energy -= 3 * deltaTime;
+      break;
+  }
+}
+```
+
+### Food Detection Algorithm
+```typescript
+function detectFoodSources(creature: Creature, foodSources: FoodSource[]): FoodSource[] {
+  const perceptionRange = creature.stats.perception;
+  return foodSources.filter(food => {
+    const distance = Vector2.distance(creature.position, food.position);
+    return distance <= perceptionRange && 
+           this.isCompatibleFood(creature.type, food.type);
+  }).sort((a, b) => {
+    // Sort by distance and food value
+    const distA = Vector2.distance(creature.position, a.position);
+    const distB = Vector2.distance(creature.position, b.position);
+    const valueA = this.getFoodValue(creature.type, a.type);
+    const valueB = this.getFoodValue(creature.type, b.type);
+    
+    // Prioritize by value/distance ratio
+    return (valueB/distB) - (valueA/distA);
+  });
+}
+```
+
+### Food Regeneration System
+```typescript
+class FoodRegenerationSystem {
+  private foodSources: FoodSource[] = [];
+  private regenerationRates: Map<FoodType, number> = new Map();
+  
+  update(deltaTime: number): void {
+    this.foodSources.forEach(food => {
+      const rate = this.regenerationRates.get(food.type) || 0;
+      food.regenerate(rate * deltaTime);
+    });
+  }
+}
+```
+
+Consider implementing a quadtree spatial partitioning system for efficient food source detection in large environments with many resources.
+</info added on 2025-05-28T21:39:57.508Z>
+
+<info added on 2025-05-28T21:48:30.529Z>
+<info added on 2025-05-29T14:22:31.508Z>
+## Technical Implementation Details
+
+### Advanced Food Consumption Mechanics
+```typescript
+// Food quality effects implementation
+interface FoodQualityEffect {
+  energyMultiplier: number;
+  statusEffects?: StatusEffect[];
+  duration?: number;
+}
+
+const FOOD_QUALITY_EFFECTS: Record<FoodQuality, FoodQualityEffect> = {
+  TOXIC: { 
+    energyMultiplier: -0.5, 
+    statusEffects: [{ type: 'POISONED', magnitude: 0.8, duration: 45 }] 
+  },
+  POOR: { energyMultiplier: 0.6 },
+  AVERAGE: { energyMultiplier: 1.0 },
+  GOOD: { 
+    energyMultiplier: 1.3, 
+    statusEffects: [{ type: 'ENERGIZED', magnitude: 0.3, duration: 20 }] 
+  },
+  EXCELLENT: { 
+    energyMultiplier: 1.8, 
+    statusEffects: [{ type: 'ENERGIZED', magnitude: 0.6, duration: 30 }] 
+  }
+};
+```
+
+### Hunger-Based Detection System
+```typescript
+// Hunger-based detection range calculation
+function calculateDetectionRange(creature: ICreature): number {
+  const baseRange = creature.stats.perception;
+  const hungerFactor = 1 + ((creature.maxEnergy - creature.energy) / creature.maxEnergy);
+  
+  // Creatures get more perceptive as they get hungrier
+  return baseRange * Math.min(hungerFactor, 2.0); // Cap at 2x normal range
+}
+```
+
+### Terrain Occupancy Grid
+```typescript
+class TerrainOccupancyGrid {
+  private grid: Map<string, Set<EntityId>> = new Map();
+  private cellSize: number = 10; // Size of each grid cell
+  
+  // Get cell key from world position
+  private getCellKey(position: Vector2): string {
+    const cellX = Math.floor(position.x / this.cellSize);
+    const cellY = Math.floor(position.y / this.cellSize);
+    return `${cellX},${cellY}`;
+  }
+  
+  // Add entity to grid
+  addEntity(entity: IEntity): void {
+    const cellKey = this.getCellKey(entity.position);
+    if (!this.grid.has(cellKey)) {
+      this.grid.set(cellKey, new Set());
+    }
+    this.grid.get(cellKey)!.add(entity.id);
+  }
+  
+  // Get all entities in a radius
+  getEntitiesInRadius(position: Vector2, radius: number): Set<EntityId> {
+    const result = new Set<EntityId>();
+    const cellRadius = Math.ceil(radius / this.cellSize);
+    
+    const centerX = Math.floor(position.x / this.cellSize);
+    const centerY = Math.floor(position.y / this.cellSize);
+    
+    // Check all cells in square area (optimization opportunity)
+    for (let x = centerX - cellRadius; x <= centerX + cellRadius; x++) {
+      for (let y = centerY - cellRadius; y <= centerY + cellRadius; y++) {
+        const key = `${x},${y}`;
+        const cellEntities = this.grid.get(key);
+        if (cellEntities) {
+          cellEntities.forEach(id => result.add(id));
+        }
+      }
+    }
+    
+    return result;
+  }
+}
+```
+
+### Specialized Terrain Effects
+```typescript
+// Special terrain effects with probabilistic outcomes
+function applySpecialTerrainEffects(creature: ICreature, terrain: TerrainType, deltaTime: number): void {
+  switch(terrain) {
+    case TerrainType.QUICKSAND:
+      // Increasing chance of immobilization the longer a creature stays
+      creature.movementData.stuckProbability += deltaTime * 0.1;
+      if (Math.random() < creature.movementData.stuckProbability) {
+        creature.addStatusEffect({
+          type: 'IMMOBILIZED',
+          magnitude: 0.8,
+          duration: 5 + Math.random() * 10
+        });
+      }
+      break;
+      
+    case TerrainType.ELECTRIC_FIELD:
+      // Random shock chance
+      if (Math.random() < 0.05 * deltaTime) {
+        const damage = 5 + Math.random() * 10;
+        creature.health -= damage;
+        creature.addStatusEffect({
+          type: 'STUNNED',
+          magnitude: 1.0,
+          duration: 2 + Math.random() * 3
+        });
+        
+        // Create memory of painful experience
+        creature.memory.addEntry({
+          type: 'TERRAIN_DANGER',
+          location: creature.position.clone(),
+          terrainType: TerrainType.ELECTRIC_FIELD,
+          painLevel: damage / creature.maxHealth,
+          timestamp: world.currentTime
+        });
+      }
+      break;
+  }
+}
+```
+
+### Food Source Management System
+```typescript
+class FoodSourceManager {
+  private sources: Map<string, FoodSource> = new Map();
+  private spatialIndex: QuadTree<FoodSource>;
+  private worldBounds: Rect;
+  
+  constructor(worldBounds: Rect) {
+    this.worldBounds = worldBounds;
+    this.spatialIndex = new QuadTree<FoodSource>(worldBounds, 10); // Max 10 items per node
+  }
+  
+  // Add new food source to the world
+  addFoodSource(source: FoodSource): void {
+    this.sources.set(source.id, source);
+    this.spatialIndex.insert(source);
+  }
+  
+  // Get all food sources in radius
+  getFoodSourcesInRadius(position: Vector2, radius: number): FoodSource[] {
+    const searchArea = new Circle(position, radius);
+    return this.spatialIndex.query(searchArea);
+  }
+  
+  // Update all food sources (regeneration, etc)
+  update(deltaTime: number): void {
+    for (const source of this.sources.values()) {
+      // Skip infinite sources
+      if (!source.isInfinite) {
+        source.regenerationTimer += deltaTime;
+        
+        // Time to regenerate?
+        if (source.regenerationTimer >= source.regenerationRate) {
+          source.regenerationTimer = 0;
+          source.amount = Math.min(source.amount + source.regenerationAmount, source.maxAmount);
+          
+          // If source was previously depleted, reinsert into spatial index
+          if (source.amount === source.regenerationAmount && source.amount > 0) {
+            this.spatialIndex.insert(source);
+          }
+        }
+      }
+    }
+  }
+  
+  // Remove depleted food sources
+  removeDepleted(): void {
+    const depleted: string[] = [];
+    
+    for (const [id, source] of this.sources.entries()) {
+      if (source.amount <= 0 && !source.isInfinite && !source.canRegenerate) {
+        depleted.push(id);
+        this.spatialIndex.remove(source);
+      }
+    }
+    
+    depleted.forEach(id => this.sources.delete(id));
+  }
+}
+```
+
+### Performance Monitoring
+```typescript
+// Performance monitoring for resource and terrain systems
+class InteractionPerformanceMonitor {
+  private metrics: {
+    foodDetectionTime: number[];
+    terrainLookupTime: number[];
+    effectApplicationTime: number[];
+  } = {
+    foodDetectionTime: [],
+    terrainLookupTime: [],
+    effectApplicationTime: []
+  };
+  
+  // Record timing for a specific operation
+  recordTiming(operation: keyof typeof this.metrics, timeMs: number): void {
+    this.metrics[operation].push(timeMs);
+    // Keep only last 1000 measurements
+    if (this.metrics[operation].length > 1000) {
+      this.metrics[operation].shift();
+    }
+  }
+  
+  // Get average timing for an operation
+  getAverageTiming(operation: keyof typeof this.metrics): number {
+    const times = this.metrics[operation];
+    if (times.length === 0) return 0;
+    
+    const sum = times.reduce((acc, time) => acc + time, 0);
+    return sum / times.length;
+  }
+  
+  // Log performance report
+  logPerformanceReport(): void {
+    console.log('=== Interaction Systems Performance Report ===');
+    for (const [operation, times] of Object.entries(this.metrics)) {
+      const avg = times.length > 0 ? 
+        times.reduce((acc, time) => acc + time, 0) / times.length : 0;
+      
+      console.log(`${operation}: ${avg.toFixed(3)}ms average (${times.length} samples)`);
+    }
+  }
+}
+```
+</info added on 2025-05-29T14:22:31.508Z>
+</info added on 2025-05-28T21:48:30.529Z>
 
 ## 4. Create Reproduction System with Genetic Combination [pending]
 ### Dependencies: 11.1, 11.2, 11.3
@@ -467,6 +800,65 @@ calculateDamage(attacker: Creature, defender: Creature, actionType: CombatAction
 5. Implement offspring spawning mechanics with inherited traits.
 6. Create population control mechanisms to prevent overpopulation.
 7. Testing approach: Trigger reproduction between creatures with known genetic traits and verify that offspring inherit a proper combination of parent traits with occasional mutations.
+
+<info added on 2025-05-28T21:49:08.656Z>
+## Implementation Details
+
+### Genetic Traits Structure
+- Use a weighted gene system with dominant/recessive alleles
+- Implement traits as floating-point values within defined ranges (e.g., speed: 0.5-2.0)
+- Store genes in a binary string representation for efficient mutation operations
+- Example gene structure:
+  ```typescript
+  interface Gene {
+    traitId: string;
+    dominance: number; // 0-1 scale for co-dominance calculations
+    value: number;
+    mutationRate: number;
+  }
+  ```
+
+### Genetic Combination Algorithm
+- Implement crossover points for genetic recombination (1-3 points recommended)
+- Use weighted averaging for continuous traits with randomized bias
+- Add epigenetic factors that can be influenced by environment
+- Example genetic combination:
+  ```typescript
+  function combineGenes(parent1: Gene[], parent2: Gene[]): Gene[] {
+    return parent1.map((gene, i) => {
+      const inheritanceChance = gene.dominance / (gene.dominance + parent2[i].dominance);
+      return Math.random() < inheritanceChance ? 
+        cloneGene(gene) : cloneGene(parent2[i]);
+    }).map(applyMutation);
+  }
+  ```
+
+### Mutation System
+- Implement different mutation types: point, shift, and inversion
+- Use Gaussian distribution for value mutations to maintain biological realism
+- Add rare chance (0.5-1%) for novel trait emergence
+- Consider environmental factors affecting mutation rates
+
+### Reproduction Triggers
+- Use a compatibility score based on genetic diversity and health
+- Implement energy threshold as percentage of max energy (suggest 70%)
+- Add seasonal/cyclical reproduction windows for population control
+- Example trigger condition:
+  ```typescript
+  function canReproduce(creature: Creature, potentialMate: Creature): boolean {
+    return creature.energy > creature.maxEnergy * 0.7 &&
+           creature.age > creature.maturityAge &&
+           creature.reproductionCooldown <= 0 &&
+           calculateCompatibility(creature, potentialMate) > 0.6;
+  }
+  ```
+
+### Testing Strategy
+- Create controlled test environments with fixed random seeds
+- Implement trait visualization tools for debugging inheritance patterns
+- Track genetic diversity metrics across generations
+- Test extreme cases: highly specialized parents, maximum genetic distance
+</info added on 2025-05-28T21:49:08.656Z>
 
 ## 5. Implement Signal-Based Communication and Obstacle Interaction [pending]
 ### Dependencies: 11.1, 11.3

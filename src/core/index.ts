@@ -37,5 +37,22 @@ export {
   type CombatRoundResult,
   type CombatConfig,
 } from "./combat-system";
+export {
+  ResourceInteractionSystem,
+  FoodSource,
+  FoodType,
+  CreatureType,
+  ResourceQuality,
+  type IFoodSource,
+  type ResourceDetectionConfig,
+} from "./resource-interaction";
+export {
+  TerrainInteractionSystem,
+  TerrainType,
+  type TerrainProperties,
+  type TerrainCell,
+  type TerrainEffect,
+  type TerrainInteractionConfig,
+} from "./terrain-interaction";
 
 export const CORE_MODULE_VERSION = "0.1.0";
