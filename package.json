@@ -9,7 +9,7 @@
     "build": "tsc && vite build",
     "watch": "tsc -w",
     "serve": "vite",
-    "cli": "tsc -p tsconfig.build.json && node dist/cli.js",
+    "cli": "tsc -p tsconfig.build.json && node build/cli.js",
     "test": "vitest run",
     "test:ui": "vitest --ui"
   },
