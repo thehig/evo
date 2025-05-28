@@ -12,6 +12,7 @@ import { GeneticAlgorithm } from "../genetic/genetic-algorithm";
 import { NeuralNetwork } from "../neural/neural-network";
 import { Creature } from "../core/creature";
 import { Random } from "../core/random";
+import { createLogger } from "../utils/logger";
 import {
   IGeneticAlgorithmConfig,
   IIndividual,
@@ -20,6 +21,9 @@ import {
 } from "../genetic/types";
 import { INeuralNetwork, INeuralNetworkConfig } from "../neural/types";
 import { ICreatureConfig } from "../core/creature-types";
+
+// Create a logger for the training simulator
+const trainingLogger = createLogger("TrainingSimulator");
 
 /**
  * Training scenario configuration
@@ -190,7 +194,7 @@ export class TrainingSimulator extends SimulationEngine {
     this._generationStats = [];
     this._trainingStartTime = Date.now();
 
-    console.log(
+    trainingLogger.info(
       `Training initialized with ${this._geneticAlgorithm.config.populationSize} individuals`
     );
   }
@@ -226,9 +230,11 @@ export class TrainingSimulator extends SimulationEngine {
         survivalRate: 0, // Will be calculated during fitness evaluation
       }));
 
-      console.log(`Training completed after ${allStats.length} generations`);
+      trainingLogger.info(
+        `Training completed after ${allStats.length} generations`
+      );
     } catch (error) {
-      console.error("Training failed:", error);
+      trainingLogger.error("Training failed:", error);
       throw error;
     } finally {
       this._isTraining = false;
@@ -251,7 +257,7 @@ export class TrainingSimulator extends SimulationEngine {
       throw new Error("Training must be started before running generations");
     }
 
-    console.log(`Running generation ${this._currentGeneration + 1}`);
+    trainingLogger.debug(`Running generation ${this._currentGeneration + 1}`);
 
     // Evaluate fitness for current population
     await this._geneticAlgorithm.evaluateFitness(this._createFitnessFunction());

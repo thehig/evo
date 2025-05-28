@@ -12,12 +12,16 @@ import { World } from "../../src/world/World";
 import { Random } from "../../src/core/random";
 import { NeuralNetwork } from "../../src/neural/neural-network";
 import { ActivationType } from "../../src/neural/types";
+import { createLogger } from "../../src/utils/logger";
 import {
   EntityType,
   CreatureAction,
   VisionConfig,
   MemoryConfig,
 } from "../../src/core/creature-types";
+
+// Create a logger for the test
+const testLogger = createLogger("SensorySystemTest");
 
 describe("SensorySystem", () => {
   let world: World;
@@ -593,14 +597,14 @@ describe("SensorySystem", () => {
 
       // Debug: Check what the creature's actual configuration is
       const config = creature.getConfig();
-      console.log("Creature vision config:", config.vision);
-      console.log("Creature memory config:", config.memory);
+      testLogger.debug("Creature vision config:", config.vision);
+      testLogger.debug("Creature memory config:", config.memory);
 
       const actualInputSize = SensorySystem.calculateInputSize(
         config.vision,
         config.memory
       );
-      console.log("Actual input size needed:", actualInputSize);
+      testLogger.debug("Actual input size needed:", actualInputSize);
 
       // Simulate a few ticks
       creature.update(1);

@@ -10,6 +10,13 @@ export default defineConfig({
     typecheck: {
       tsconfig: "./tsconfig.test.json",
     },
+    setupFiles: ["./tests/setup.ts"],
+    env: {
+      // Set logging to SILENT during tests to reduce console output
+      LOG_LEVEL: "SILENT",
+      DEBUG: "false",
+      VERBOSE: "false",
+    },
   },
   resolve: {
     alias: {

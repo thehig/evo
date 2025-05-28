@@ -8,6 +8,10 @@ import {
 } from "./interfaces";
 import { EventSystem, SimulationEvents } from "./events";
 import { Random } from "./random";
+import { createLogger } from "../utils/logger";
+
+// Create a logger for the simulation engine
+const simulationLogger = createLogger("SimulationEngine");
 
 /**
  * Default simulation configuration
@@ -214,7 +218,7 @@ export abstract class SimulationEngine implements ISimulationEngine {
         try {
           this.step();
         } catch (error) {
-          console.error("Error during simulation tick:", error);
+          simulationLogger.error("Error during simulation tick:", error);
           if (this._config.pauseOnError) {
             this.pause();
           }

@@ -8,6 +8,7 @@
 import { IEntity, ICreature } from "./interfaces";
 import { World } from "../world/World";
 import { Position, TerrainType, ResourceType } from "../world/types";
+import { createLogger } from "../utils/logger";
 import {
   EntityType,
   VisionCell,
@@ -17,6 +18,9 @@ import {
   MemoryConfig,
   CreatureAction,
 } from "./creature-types";
+
+// Create a logger for the sensory system
+const sensoryLogger = createLogger("SensorySystem");
 
 /**
  * Sensory system for creatures
@@ -90,7 +94,7 @@ export class SensorySystem {
     const creaturePos = creature.position;
     const range = visionConfig.range;
 
-    console.log(
+    sensoryLogger.verbose(
       `Generating vision for creature at (${creaturePos.x}, ${creaturePos.y}) with range ${range}, maxDistance ${visionConfig.maxDistance}`
     );
 
@@ -118,7 +122,7 @@ export class SensorySystem {
           targetY >= this.world.height
         ) {
           // Out of bounds - treat as obstacle
-          console.log(
+          sensoryLogger.verbose(
             `Cell (${dx}, ${dy}) -> (${targetX}, ${targetY}): OUT OF BOUNDS`
           );
           vision.push(
@@ -130,7 +134,7 @@ export class SensorySystem {
         // Calculate distance
         const distance = Math.sqrt(dx * dx + dy * dy);
         if (distance > visionConfig.maxDistance) {
-          console.log(
+          sensoryLogger.verbose(
             `Cell (${dx}, ${dy}): distance ${distance.toFixed(2)} > ${
               visionConfig.maxDistance
             } - SKIPPED`
@@ -138,7 +142,7 @@ export class SensorySystem {
           continue; // Too far to see
         }
 
-        console.log(
+        sensoryLogger.verbose(
           `Cell (${dx}, ${dy}) -> (${targetX}, ${targetY}): distance ${distance.toFixed(
             2
           )} - INCLUDED`
@@ -157,7 +161,7 @@ export class SensorySystem {
       }
     }
 
-    console.log(`Total vision cells generated: ${vision.length}`);
+    sensoryLogger.verbose(`Total vision cells generated: ${vision.length}`);
     return vision;
   }
 
