@@ -148,6 +148,42 @@ export interface WorldConfig {
 
   /** Maximum number of chunks to keep loaded */
   maxLoadedChunks: number;
+
+  /** Signal system configuration */
+  signalConfig?: {
+    /** Maximum number of active signals */
+    maxActiveSignals?: number;
+    /** Whether signal decay is enabled */
+    signalDecayEnabled?: boolean;
+    /** Whether to use spatial hashing for performance */
+    spatialHashing?: boolean;
+    /** Grid size for spatial hashing */
+    gridSize?: number;
+    /** Maximum signal range */
+    maxRange?: number;
+    /** Environmental attenuation factor */
+    environmentalAttenuation?: number;
+  };
+
+  /** Obstacle system configuration */
+  obstacleConfig?: {
+    /** Whether collision detection is enabled */
+    collisionDetection?: boolean;
+    /** Whether signal attenuation by obstacles is enabled */
+    signalAttenuation?: boolean;
+    /** Whether obstacles block vision */
+    visionBlocking?: boolean;
+    /** Whether status effects are enabled */
+    statusEffects?: boolean;
+    /** Whether resource generation is enabled */
+    resourceGeneration?: boolean;
+    /** Maximum number of obstacles */
+    maxObstacles?: number;
+    /** Whether to use spatial hashing for performance */
+    spatialHashing?: boolean;
+    /** Grid size for spatial hashing */
+    gridSize?: number;
+  };
 }
 
 /**

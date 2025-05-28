@@ -54,5 +54,19 @@ export {
   type TerrainEffect,
   type TerrainInteractionConfig,
 } from "./terrain-interaction";
+export {
+  SignalSystem,
+  DEFAULT_SIGNAL_CONFIG,
+  DEFAULT_SIGNAL_EMISSIONS,
+} from "./signal-system";
+export {
+  ObstacleSystem,
+  DEFAULT_OBSTACLE_CONFIG,
+  DEFAULT_OBSTACLE_PROPERTIES,
+} from "./obstacle-system";
+
+// Interaction systems
+export * from "./genetics";
+export * from "./reproduction-system";
 
 export const CORE_MODULE_VERSION = "0.1.0";

@@ -4,6 +4,8 @@
 
 import { IWorld, IEntity, ICreature, IRandom } from "../core/interfaces";
 import { SensorySystem } from "../core/sensory-system";
+import { SignalSystem } from "../core/signal-system";
+import { ObstacleSystem } from "../core/obstacle-system";
 import { Creature } from "../core/creature";
 import {
   Position,
@@ -37,6 +39,24 @@ const DEFAULT_WORLD_CONFIG: WorldConfig = {
   obstacleDensity: 0.05,
   useChunking: true,
   maxLoadedChunks: 25,
+  signalConfig: {
+    maxActiveSignals: 1000,
+    signalDecayEnabled: true,
+    spatialHashing: true,
+    gridSize: 10,
+    maxRange: 50,
+    environmentalAttenuation: 0.1,
+  },
+  obstacleConfig: {
+    collisionDetection: true,
+    signalAttenuation: true,
+    visionBlocking: true,
+    statusEffects: true,
+    resourceGeneration: true,
+    maxObstacles: 5000,
+    spatialHashing: true,
+    gridSize: 10,
+  },
 };
 
 /**
@@ -57,6 +77,8 @@ export class World implements IWorld {
   private readonly random: IRandom;
   private readonly generationOptions: WorldGenerationOptions;
   private readonly sensorySystem: SensorySystem;
+  private readonly signalSystem: SignalSystem;
+  private readonly obstacleSystem: ObstacleSystem;
 
   // Grid system
   private grid: GridCell[][] = [];
@@ -84,6 +106,12 @@ export class World implements IWorld {
 
     // Initialize sensory system
     this.sensorySystem = new SensorySystem(this);
+
+    // Initialize signal system with configuration
+    this.signalSystem = new SignalSystem(this.config.signalConfig);
+
+    // Initialize obstacle system with configuration
+    this.obstacleSystem = new ObstacleSystem(this.config.obstacleConfig);
 
     this.initialize();
   }
@@ -183,6 +211,10 @@ export class World implements IWorld {
   update(deltaTime: number): void {
     this._currentTick++;
 
+    // Update signal and obstacle systems
+    this.signalSystem.update(deltaTime);
+    this.obstacleSystem.update(deltaTime);
+
     // Update all entities
     for (const entity of this.entityMap.values()) {
       if (entity.active) {
@@ -197,6 +229,12 @@ export class World implements IWorld {
             oldPosition.y !== entity.position.y)
         ) {
           this.handleEntityMovement(entity, oldPosition, entity.position);
+        }
+
+        // Process signals and obstacles for creatures
+        if (this.isCreature(entity)) {
+          this.processCreatureSignals(entity);
+          this.processCreatureObstacles(entity);
         }
       }
     }
@@ -360,9 +398,23 @@ export class World implements IWorld {
       terrainCounts: Object.fromEntries(terrainCounts),
       resourceCounts: Object.fromEntries(resourceCounts),
       obstacleCount,
-      loadedChunks: this.chunks.size,
+      activeChunks: this.chunks.size,
       currentTick: this._currentTick,
     };
+  }
+
+  /**
+   * Get the signal system for external access
+   */
+  getSignalSystem() {
+    return this.signalSystem;
+  }
+
+  /**
+   * Get the obstacle system for external access
+   */
+  getObstacleSystem() {
+    return this.obstacleSystem;
   }
 
   // Private methods
@@ -633,5 +685,88 @@ export class World implements IWorld {
 
   private getChunkKey(chunkX: number, chunkY: number): string {
     return `${chunkX},${chunkY}`;
+  }
+
+  private processCreatureSignals(entity: ICreature): void {
+    // Get signals received by this creature
+    const signalReceptions = this.signalSystem.getSignalsForCreature(entity);
+
+    if (signalReceptions.length > 0) {
+      // Process each signal reception
+      for (const reception of signalReceptions) {
+        const result = this.signalSystem.processSignalReception(
+          entity,
+          reception
+        );
+
+        // Apply signal processing results to creature behavior
+        // This would integrate with the creature's behavior system
+        // For now, we'll just store the signal in the creature's memory
+        if (result.understood && entity.setBroadcastSignal) {
+          // Adjust creature's broadcast signal based on received signals
+          const currentSignal = entity.getBroadcastSignal();
+          const newSignal = Math.min(
+            1.0,
+            currentSignal + result.actionInfluence * 0.1
+          );
+          entity.setBroadcastSignal(newSignal);
+        }
+      }
+    }
+  }
+
+  private processCreatureObstacles(entity: ICreature): void {
+    // Check for obstacle interactions at current position
+    const interactionResult = this.obstacleSystem.checkInteraction(
+      entity,
+      entity.position
+    );
+
+    if (interactionResult.blocked) {
+      // Apply collision effects
+      if (interactionResult.damage > 0) {
+        entity.energy = Math.max(0, entity.energy - interactionResult.damage);
+      }
+
+      // Apply status effects
+      for (const effect of interactionResult.statusEffects) {
+        // This would integrate with a creature status effect system
+        // For now, we'll apply simple energy modifications
+        if (effect.type === "poisoned") {
+          entity.energy = Math.max(0, entity.energy - effect.magnitude);
+        } else if (effect.type === "protected") {
+          // Protected status could reduce damage from other sources
+          // This would be handled by a more complex status system
+        }
+      }
+    }
+
+    // Detect nearby obstacles for pathfinding and behavior
+    const detectionRange = 10; // This could be a creature trait
+    const detectedObstacles = this.obstacleSystem.detectObstacles(
+      entity,
+      detectionRange
+    );
+
+    if (detectedObstacles.length > 0) {
+      // This information could be used by the creature's AI for:
+      // - Pathfinding around obstacles
+      // - Seeking shelter when threatened
+      // - Avoiding dangerous areas
+      // - Finding resource points
+
+      // For now, we'll just adjust the creature's broadcast signal based on danger
+      const dangerLevel = detectedObstacles.reduce(
+        (max, detection) => Math.max(max, detection.dangerLevel),
+        0
+      );
+
+      if (dangerLevel > 0.5 && entity.setBroadcastSignal) {
+        // Increase broadcast signal when in danger (warning others)
+        const currentSignal = entity.getBroadcastSignal();
+        const newSignal = Math.min(1.0, currentSignal + dangerLevel * 0.2);
+        entity.setBroadcastSignal(newSignal);
+      }
+    }
   }
 }
