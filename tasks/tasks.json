@@ -367,7 +367,7 @@
       "id": 17,
       "title": "Implement WebGL Renderer Foundation",
       "description": "Create the foundation for a WebGL-based renderer using either PhaserJS or P5.js.",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         8
       ],

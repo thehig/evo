@@ -1,6 +1,6 @@
 # Task ID: 17
 # Title: Implement WebGL Renderer Foundation
-# Status: pending
+# Status: done
 # Dependencies: 8
 # Priority: medium
 # Description: Create the foundation for a WebGL-based renderer using either PhaserJS or P5.js.

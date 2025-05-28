@@ -1,29 +1,15 @@
 /**
  * Renderer module exports
- *
- * This module contains the renderer interface and implementations.
  */
 
 // Core types and interfaces
-export type {
-  IRenderer,
-  RendererCapabilities,
-  WorldSnapshot,
-  EntitySnapshot,
-  CreatureSnapshot,
-  CellSnapshot,
-  RenderContext,
-  RendererEvent,
-  RendererEventHandler,
-  RendererFactory,
-  RendererRegistration,
-} from "./types";
+export * from "./types";
 
-export { RendererEventType } from "./types";
-
-// Core classes
-export { WorldSnapshotCreator } from "./WorldSnapshot";
+// Renderer implementations
 export { NullRenderer } from "./NullRenderer";
+
+// Utility classes
+export { WorldSnapshotCreator } from "./WorldSnapshot";
 export { RendererRegistry } from "./RendererRegistry";
 
 // Import classes for utility functions
@@ -35,8 +21,20 @@ export const createNullRenderer = (_config?: Record<string, unknown>) => {
   return new NullRenderer();
 };
 
+export const createWebGLRenderer = async (config?: Record<string, unknown>) => {
+  // Lazy load WebGL renderer to avoid P5.js loading in Node.js environments
+  const { WebGLRenderer } = await import("./WebGLRenderer");
+  return new WebGLRenderer(config);
+};
+
 export const getRendererRegistry = () => {
   return RendererRegistry.getInstance();
 };
 
 export const RENDERER_MODULE_VERSION = "0.1.0";
+
+// Lazy export for WebGL renderer
+export const getWebGLRenderer = async () => {
+  const { WebGLRenderer } = await import("./WebGLRenderer");
+  return WebGLRenderer;
+};
