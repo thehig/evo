@@ -5,5 +5,12 @@
  * for the simulation engine.
  */
 
-// Placeholder - to be implemented in future tasks
+// Interfaces
+export * from "./interfaces";
+
+// Implementations
+export { Random } from "./random";
+export { EventSystem, SimulationEvents } from "./events";
+export { SimulationEngine } from "./simulation-engine";
+
 export const CORE_MODULE_VERSION = "0.1.0";
