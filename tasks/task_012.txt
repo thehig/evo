@@ -1,11 +1,39 @@
 # Task ID: 12
 # Title: Implement Training Simulator Core
-# Status: pending
+# Status: in-progress
 # Dependencies: 4, 6, 10
 # Priority: high
-# Description: Create the core functionality for the Training Simulator component.
+# Description: Create the core functionality for the Training Simulator component and resolve critical input size mismatch issue.
 # Details:
 Implement TrainingSimulator class. Create scenario management system. Implement genetic algorithm cycle (initial generation, simulation run, fitness evaluation, selection, reproduction, iteration). Add performance monitoring for evolution progress. Create generation tracking and statistics collection. Implement configurable simulation parameters.
 
+UPDATE: The critical neural network input size mismatch issue has been successfully resolved. The root cause was hardcoded input sizes in ScenarioManager (25, 30, 28, 35) while the actual input size calculated by SensorySystem.calculateInputSize() was 154 for DEFAULT_CREATURE_CONFIG. The solution implemented was to update ScenarioManager to dynamically calculate input sizes using SensorySystem.calculateInputSize() across all scenario creation methods. Core Training Simulator functionality is now working with 22 out of 24 integration tests passing.
+
 # Test Strategy:
-Integration tests for complete genetic algorithm cycle. Verify fitness evaluation correctly identifies successful creatures. Test multiple generations for evolutionary progress. Ensure statistics are correctly tracked and reported. Test with different scenario configurations.
+Integration tests for complete genetic algorithm cycle. Verify fitness evaluation correctly identifies successful creatures. Test multiple generations for evolutionary progress. Ensure statistics are correctly tracked and reported. Test with different scenario configurations. Verify input size compatibility between neural network and sensory system, which has now been implemented and confirmed working.
+
+# Subtasks:
+## 12.1. Investigate Neural Network Input Size Mismatch [done]
+### Dependencies: None
+### Description: Diagnose and fix the critical mismatch between neural network expected inputs and creature sensory system outputs.
+### Details:
+Investigate why neural network expects 25 inputs while creature sensory system provides 154 inputs. Error occurs in NeuralNetwork.process() method and is breaking all training functionality.
+
+## 12.2. Add Input Size Compatibility Tests [in-progress]
+### Dependencies: None
+### Description: Create tests to verify neural network and sensory system compatibility.
+### Details:
+Implement tests that explicitly verify the neural network input size matches the sensory system output size across all scenario configurations. Verification script has been created and confirmed all scenarios have matching input sizes. 22 out of 24 integration tests are now passing.
+
+## 12.3. Update Documentation for Input Requirements [to-do]
+### Dependencies: None
+### Description: Document the expected input/output sizes for neural networks and sensory systems.
+### Details:
+Update technical documentation to clearly specify the input/output requirements for neural networks and sensory systems to prevent future mismatches. Include details about the dynamic calculation of input sizes using SensorySystem.calculateInputSize().
+
+## 12.4. Complete Remaining Training Simulator Implementation [to-do]
+### Dependencies: None
+### Description: Finish implementing the core Training Simulator functionality now that the input size mismatch is resolved.
+### Details:
+With the critical input size mismatch resolved and training simulator now running successfully, complete the remaining implementation tasks for the Training Simulator core functionality.
+

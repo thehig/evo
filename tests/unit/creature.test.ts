@@ -28,7 +28,15 @@ describe("Creature", () => {
     maxEnergy: 1.0,
     energyCosts: {
       movement: 0.1,
+      diagonalMovement: 0.14,
       rest: -0.05,
+      sleep: -0.08,
+      emitSignal: 0.03,
+      eat: -0.15,
+      drink: -0.08,
+      gather: 0.04,
+      attack: 0.12,
+      defend: 0.06,
       metabolism: 0.01,
     },
     maxAge: 100,
@@ -67,11 +75,11 @@ describe("Creature", () => {
     console.log("Merged config memory:", mergedConfig.memory);
     console.log("Expected input size:", expectedInputSize);
 
-    // Create a neural network with the correct input size
+    // Create a neural network with the correct input size and output size for all actions
     brain = new NeuralNetwork({
       inputSize: expectedInputSize,
       hiddenLayers: [{ size: 8, activation: ActivationType.SIGMOID }],
-      outputLayer: { size: 5, activation: ActivationType.SIGMOID },
+      outputLayer: { size: 16, activation: ActivationType.SIGMOID }, // 16 actions now
       seed: 12345,
     });
 
@@ -135,16 +143,31 @@ describe("Creature", () => {
       creature.update(1);
       // Energy should change due to metabolism + action costs
       // The exact change depends on the action taken by the neural network
-      // Metabolism cost is 0.01, but action could be REST (-0.05) or movement (0.1)
       expect(creature.energy).not.toBe(initialEnergy);
 
       // Verify that metabolism was applied by checking the range of possible outcomes
       const metabolismCost = 0.01;
-      const restCost = -0.05; // REST gives energy
-      const movementCost = 0.1;
 
-      const minPossibleEnergy = initialEnergy - metabolismCost - movementCost;
-      const maxPossibleEnergy = initialEnergy - metabolismCost - restCost;
+      // With 16 actions, we need to account for all possible energy costs
+      const energyCosts = testConfig.energyCosts!;
+      const allActionCosts = [
+        energyCosts.movement!, // 0.1
+        energyCosts.diagonalMovement!, // 0.14
+        energyCosts.rest!, // -0.05
+        energyCosts.sleep!, // -0.08
+        energyCosts.emitSignal!, // 0.03
+        energyCosts.eat!, // -0.15
+        energyCosts.drink!, // -0.08
+        energyCosts.gather!, // 0.04
+        energyCosts.attack!, // 0.12
+        energyCosts.defend!, // 0.06
+      ];
+
+      const minActionCost = Math.min(...allActionCosts); // Most energy gained (eat: -0.15)
+      const maxActionCost = Math.max(...allActionCosts); // Most energy lost (diagonal: 0.14)
+
+      const minPossibleEnergy = initialEnergy - metabolismCost - maxActionCost;
+      const maxPossibleEnergy = initialEnergy - metabolismCost - minActionCost;
 
       expect(creature.energy).toBeGreaterThanOrEqual(minPossibleEnergy);
       expect(creature.energy).toBeLessThanOrEqual(maxPossibleEnergy);
@@ -264,7 +287,7 @@ describe("Creature", () => {
       creature.think();
       const output = creature.getLastOutput();
       expect(output).toBeDefined();
-      expect(output).toHaveLength(5); // 5 possible actions
+      expect(output).toHaveLength(16); // 16 possible actions now
       expect(output!.every((val) => typeof val === "number")).toBe(true);
     });
 
@@ -279,8 +302,25 @@ describe("Creature", () => {
     });
 
     it("should convert neural output to actions deterministically", () => {
-      // Test with fixed neural network output
-      const mockOutput = [0.1, 0.9, 0.2, 0.3, 0.4]; // MOVE_SOUTH should be selected
+      // Test with fixed neural network output - 16 outputs for 16 actions
+      const mockOutput = [
+        0.1,
+        0.9,
+        0.2,
+        0.3,
+        0.4,
+        0.1,
+        0.1,
+        0.1, // Movement actions (MOVE_SOUTH should be selected)
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1, // Other actions
+      ];
       const action = creature["outputToAction"](mockOutput);
       expect(action).toBe(CreatureAction.MOVE_SOUTH);
     });
@@ -295,16 +335,16 @@ describe("Creature", () => {
     it("should produce identical behavior with same neural network", () => {
       // Create two identical creatures
       const brain1 = new NeuralNetwork({
-        inputSize: 14,
+        inputSize: 60, // Use the calculated input size
         hiddenLayers: [{ size: 8, activation: ActivationType.SIGMOID }],
-        outputLayer: { size: 5, activation: ActivationType.SIGMOID },
+        outputLayer: { size: 16, activation: ActivationType.SIGMOID }, // 16 actions
         seed: 54321,
       });
 
       const brain2 = new NeuralNetwork({
-        inputSize: 14,
+        inputSize: 60, // Use the calculated input size
         hiddenLayers: [{ size: 8, activation: ActivationType.SIGMOID }],
-        outputLayer: { size: 5, activation: ActivationType.SIGMOID },
+        outputLayer: { size: 16, activation: ActivationType.SIGMOID }, // 16 actions
         seed: 54321, // Same seed
       });
 

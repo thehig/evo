@@ -69,6 +69,15 @@ export class ActionSystem {
   processActions(): Map<string, ActionResult> {
     const results = new Map<string, ActionResult>();
     const conflicts = this.detectConflicts();
+    const actionData = new Map<
+      string,
+      { creature: ICreature; action: CreatureAction }
+    >();
+
+    // Store action data before processing for feedback generation
+    for (const [creatureId, data] of this._pendingActions) {
+      actionData.set(creatureId, data);
+    }
 
     // Resolve conflicts first
     for (const conflict of conflicts) {
@@ -91,7 +100,7 @@ export class ActionSystem {
     this._pendingActions.clear();
 
     // Generate feedback for learning
-    this.generateFeedback(results);
+    this.generateFeedback(results, actionData);
 
     return results;
   }
@@ -668,12 +677,15 @@ export class ActionSystem {
   /**
    * Generate feedback for neural network learning
    */
-  private generateFeedback(results: Map<string, ActionResult>): void {
+  private generateFeedback(
+    results: Map<string, ActionResult>,
+    actionData: Map<string, { creature: ICreature; action: CreatureAction }>
+  ): void {
     for (const [creatureId, result] of results) {
-      const actionData = this._pendingActions.get(creatureId);
-      if (!actionData) continue;
+      const data = actionData.get(creatureId);
+      if (!data) continue;
 
-      const { creature, action } = actionData;
+      const { creature, action } = data;
       const nearbyEntities = this.getNearbyEntities(creature, 1);
       const nearbySignals = this.getNearbySignals(creature, 1);
 

@@ -131,7 +131,7 @@ export class Creature implements ICreature {
   }
 
   /**
-   * Update the creature for one simulation tick
+   * Update creature state each tick
    */
   update(_deltaTime: number): void {
     if (!this._active || !this._alive) {
@@ -143,6 +143,14 @@ export class Creature implements ICreature {
 
     // Apply metabolic cost
     this.energy -= this._config.energyCosts.metabolism;
+
+    // Update energy history
+    this._state.energyHistory.push(this._energy);
+    if (
+      this._state.energyHistory.length > this._config.memory.energyHistorySize
+    ) {
+      this._state.energyHistory.shift();
+    }
 
     // Update hunger based on energy level
     this._state.hunger = Math.max(0, 1.0 - this._energy);
@@ -202,7 +210,7 @@ export class Creature implements ICreature {
       return;
     }
 
-    // Determine action from neural network output
+    // Convert neural output to action
     const action = this.outputToAction(this._lastOutput);
 
     // Execute the action
@@ -317,7 +325,7 @@ export class Creature implements ICreature {
   }
 
   /**
-   * Execute a specific action (simplified - ActionSystem handles complex execution)
+   * Execute a specific action with boundary checking and proper energy management
    */
   private executeAction(action: CreatureAction): void {
     // Store the action for the action system to process
@@ -332,20 +340,74 @@ export class Creature implements ICreature {
       this._state.actionHistory.shift();
     }
 
-    // For now, apply basic energy costs directly
-    // In a full implementation, the ActionSystem would handle this
+    // Apply action effects with boundary checking
     switch (action) {
       case CreatureAction.MOVE_NORTH:
+        if (this._position.y > 0) {
+          this._position.y -= 1;
+        }
+        this.energy -= this._config.energyCosts.movement;
+        break;
+
       case CreatureAction.MOVE_SOUTH:
+        if (this._position.y < this._config.worldDimensions.height - 1) {
+          this._position.y += 1;
+        }
+        this.energy -= this._config.energyCosts.movement;
+        break;
+
       case CreatureAction.MOVE_EAST:
+        if (this._position.x < this._config.worldDimensions.width - 1) {
+          this._position.x += 1;
+        }
+        this.energy -= this._config.energyCosts.movement;
+        break;
+
       case CreatureAction.MOVE_WEST:
+        if (this._position.x > 0) {
+          this._position.x -= 1;
+        }
         this.energy -= this._config.energyCosts.movement;
         break;
 
       case CreatureAction.MOVE_NORTHEAST:
+        if (
+          this._position.x < this._config.worldDimensions.width - 1 &&
+          this._position.y > 0
+        ) {
+          this._position.x += 1;
+          this._position.y -= 1;
+        }
+        this.energy -= this._config.energyCosts.diagonalMovement;
+        break;
+
       case CreatureAction.MOVE_NORTHWEST:
+        if (this._position.x > 0 && this._position.y > 0) {
+          this._position.x -= 1;
+          this._position.y -= 1;
+        }
+        this.energy -= this._config.energyCosts.diagonalMovement;
+        break;
+
       case CreatureAction.MOVE_SOUTHEAST:
+        if (
+          this._position.x < this._config.worldDimensions.width - 1 &&
+          this._position.y < this._config.worldDimensions.height - 1
+        ) {
+          this._position.x += 1;
+          this._position.y += 1;
+        }
+        this.energy -= this._config.energyCosts.diagonalMovement;
+        break;
+
       case CreatureAction.MOVE_SOUTHWEST:
+        if (
+          this._position.x > 0 &&
+          this._position.y < this._config.worldDimensions.height - 1
+        ) {
+          this._position.x -= 1;
+          this._position.y += 1;
+        }
         this.energy -= this._config.energyCosts.diagonalMovement;
         break;
 
