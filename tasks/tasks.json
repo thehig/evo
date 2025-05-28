@@ -130,7 +130,7 @@
       "id": 7,
       "title": "Implement Persistence System - Core",
       "description": "Create the foundational save/load system for storing and retrieving simulation data.",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         3,
         5,

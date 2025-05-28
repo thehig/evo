@@ -41,4 +41,4 @@ export {
   generateObstacles,
 } from "./generation";
 
-export const WORLD_MODULE_VERSION = "1.0.0";
+export const WORLD_MODULE_VERSION = "0.1.0";
