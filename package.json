@@ -11,7 +11,8 @@
     "serve": "vite",
     "cli": "tsc -p tsconfig.build.json && node build/cli.js",
     "test": "vitest run",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "test:behavior": "vitest run tests/neuralNetworkBehavior.test.ts"
   },
   "keywords": [
     "evolution",
