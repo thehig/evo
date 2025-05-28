@@ -198,12 +198,11 @@ export async function decompressData(data: Buffer): Promise<Buffer> {
  * Parse version string to comparable format
  */
 export function parseVersion(version: string): number[] {
-  return version.split(".").map((v) => parseInt(v, 10));
+  return version.split(".").map((v) => parseInt(v, 10) || 0);
 }
 
 /**
  * Compare two version strings
- * Returns: -1 if v1 < v2, 0 if v1 === v2, 1 if v1 > v2
  */
 export function compareVersions(v1: string, v2: string): number {
   const parts1 = parseVersion(v1);

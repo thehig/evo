@@ -7,14 +7,9 @@
 // Core types and interfaces
 export * from "./types";
 
-// Main persistence manager
-export { PersistenceManager } from "./persistence-manager";
-
-// Utility functions
-export * from "./utils";
-
-// Factory functions
-export * from "./factory";
+// Export browser-compatible implementations for browser builds
+export * from "./browser-persistence";
+export { BrowserPersistenceManager as PersistenceManager } from "./index.browser";
 
 // Version information
 export const PERSISTENCE_MODULE_VERSION = "0.1.0";

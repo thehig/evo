@@ -7,31 +7,31 @@
  */
 
 // Core exports
-export * from "./core/index.js";
+export * from "./core/index";
 
 // Simulation exports
-export * from "./simulation/index.js";
+export * from "./simulation/index";
 
 // Neural network exports
-export * from "./neural/index.js";
+export * from "./neural/index";
 
 // Genetic algorithm exports
-export * from "./genetic/index.js";
+export * from "./genetic/index";
 
 // World system exports
-export * from "./world/index.js";
+export * from "./world/index";
 
 // Persistence system exports
-export * from "./persistence/index.js";
+export * from "./persistence/index";
 
 // Renderer exports
-export * from "./renderer/index.js";
+export * from "./renderer/index";
 
 // Type exports
-export * from "./types/index.js";
+export * from "./types/index";
 
 // Utility exports
-export * from "./utils/index.js";
+export * from "./utils/index";
 
 // Version information
 export const VERSION = "0.1.0";
