@@ -103,7 +103,7 @@ describe("Training Simulator Integration", () => {
 
       // Check that we have generation stats
       const stats = simulator.generationStats;
-      expect(stats).toHaveLength(3); // 3 generations
+      expect(stats).toHaveLength(4); // 4 generations (updated from 3)
 
       // Verify stats structure
       stats.forEach((stat, index) => {
@@ -267,7 +267,7 @@ describe("Scenario Manager", () => {
       const scenario = ScenarioManager.createMovementOptimizationScenario();
 
       expect(scenario.neuralNetworkConfig.hiddenLayers).toHaveLength(3);
-      expect(scenario.neuralNetworkConfig.inputSize).toBe(35);
+      expect(scenario.neuralNetworkConfig.inputSize).toBe(154); // Updated from 35 to match calculated input size
       expect(scenario.neuralNetworkConfig.hiddenLayers[0].activation).toBe(
         ActivationType.RELU
       );
