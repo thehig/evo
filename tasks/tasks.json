@@ -118,7 +118,7 @@
       "id": 6,
       "title": "Implement World Grid System",
       "description": "Create the grid-based world system with support for entities, terrain, and resources.",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         2
       ],

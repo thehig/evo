@@ -1,6 +1,6 @@
 # Task ID: 6
 # Title: Implement World Grid System
-# Status: pending
+# Status: done
 # Dependencies: 2
 # Priority: high
 # Description: Create the grid-based world system with support for entities, terrain, and resources.
