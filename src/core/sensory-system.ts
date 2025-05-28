@@ -498,10 +498,21 @@ export class SensorySystem {
   private encodeAction(action: CreatureAction): number {
     const actionMap: Record<CreatureAction, number> = {
       [CreatureAction.REST]: 0.0,
-      [CreatureAction.MOVE_NORTH]: 0.25,
-      [CreatureAction.MOVE_SOUTH]: 0.5,
-      [CreatureAction.MOVE_EAST]: 0.75,
-      [CreatureAction.MOVE_WEST]: 1.0,
+      [CreatureAction.MOVE_NORTH]: 0.1,
+      [CreatureAction.MOVE_SOUTH]: 0.2,
+      [CreatureAction.MOVE_EAST]: 0.3,
+      [CreatureAction.MOVE_WEST]: 0.4,
+      [CreatureAction.MOVE_NORTHEAST]: 0.5,
+      [CreatureAction.MOVE_NORTHWEST]: 0.6,
+      [CreatureAction.MOVE_SOUTHEAST]: 0.7,
+      [CreatureAction.MOVE_SOUTHWEST]: 0.8,
+      [CreatureAction.SLEEP]: 0.85,
+      [CreatureAction.EMIT_SIGNAL]: 0.9,
+      [CreatureAction.EAT]: 0.92,
+      [CreatureAction.DRINK]: 0.94,
+      [CreatureAction.GATHER]: 0.96,
+      [CreatureAction.ATTACK]: 0.98,
+      [CreatureAction.DEFEND]: 1.0,
     };
 
     return actionMap[action] || 0.0;

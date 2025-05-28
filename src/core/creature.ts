@@ -207,45 +207,6 @@ export class Creature implements ICreature {
 
     // Execute the action
     this.executeAction(action);
-
-    // Update state
-    this._state.lastAction = action;
-    this._state.ticksSinceLastAction = 0;
-
-    // Update action history
-    this._state.actionHistory.push(action);
-    if (
-      this._state.actionHistory.length > this._config.memory.actionHistorySize
-    ) {
-      this._state.actionHistory.shift();
-    }
-
-    // Update encounter history based on vision
-    if (this._lastSensoryData) {
-      for (const visionCell of this._lastSensoryData.vision) {
-        if (visionCell.entityType !== EntityType.EMPTY) {
-          this._state.encounterHistory.push(visionCell.entityType);
-        }
-      }
-
-      // Trim encounter history
-      if (
-        this._state.encounterHistory.length >
-        this._config.memory.encounterHistorySize
-      ) {
-        this._state.encounterHistory = this._state.encounterHistory.slice(
-          -this._config.memory.encounterHistorySize
-        );
-      }
-    }
-
-    // Update signal history (placeholder for now)
-    this._state.signalHistory.push(this._state.broadcastSignal);
-    if (
-      this._state.signalHistory.length > this._config.memory.signalHistorySize
-    ) {
-      this._state.signalHistory.shift();
-    }
   }
 
   /**
@@ -325,46 +286,99 @@ export class Creature implements ICreature {
       }
     }
 
-    // Map output index to action
+    // Map output index to action - expanded to include all new actions
     const actions = [
+      // Movement actions (8-directional)
       CreatureAction.MOVE_NORTH,
       CreatureAction.MOVE_SOUTH,
       CreatureAction.MOVE_EAST,
       CreatureAction.MOVE_WEST,
+      CreatureAction.MOVE_NORTHEAST,
+      CreatureAction.MOVE_NORTHWEST,
+      CreatureAction.MOVE_SOUTHEAST,
+      CreatureAction.MOVE_SOUTHWEST,
+
+      // Energy conservation
       CreatureAction.REST,
+      CreatureAction.SLEEP,
+
+      // Communication
+      CreatureAction.EMIT_SIGNAL,
+
+      // Special actions
+      CreatureAction.EAT,
+      CreatureAction.DRINK,
+      CreatureAction.GATHER,
+      CreatureAction.ATTACK,
+      CreatureAction.DEFEND,
     ];
 
     return actions[maxIndex % actions.length];
   }
 
   /**
-   * Execute a specific action
+   * Execute a specific action (simplified - ActionSystem handles complex execution)
    */
   private executeAction(action: CreatureAction): void {
+    // Store the action for the action system to process
+    this._state.lastAction = action;
+    this._state.ticksSinceLastAction = 0;
+
+    // Update action history
+    this._state.actionHistory.push(action);
+    if (
+      this._state.actionHistory.length > this._config.memory.actionHistorySize
+    ) {
+      this._state.actionHistory.shift();
+    }
+
+    // For now, apply basic energy costs directly
+    // In a full implementation, the ActionSystem would handle this
     switch (action) {
       case CreatureAction.MOVE_NORTH:
-        this.move(0, -1);
-        this.energy -= this._config.energyCosts.movement;
-        break;
-
       case CreatureAction.MOVE_SOUTH:
-        this.move(0, 1);
-        this.energy -= this._config.energyCosts.movement;
-        break;
-
       case CreatureAction.MOVE_EAST:
-        this.move(1, 0);
+      case CreatureAction.MOVE_WEST:
         this.energy -= this._config.energyCosts.movement;
         break;
 
-      case CreatureAction.MOVE_WEST:
-        this.move(-1, 0);
-        this.energy -= this._config.energyCosts.movement;
+      case CreatureAction.MOVE_NORTHEAST:
+      case CreatureAction.MOVE_NORTHWEST:
+      case CreatureAction.MOVE_SOUTHEAST:
+      case CreatureAction.MOVE_SOUTHWEST:
+        this.energy -= this._config.energyCosts.diagonalMovement;
         break;
 
       case CreatureAction.REST:
-        // Resting restores energy (negative cost)
         this.energy -= this._config.energyCosts.rest;
+        break;
+
+      case CreatureAction.SLEEP:
+        this.energy -= this._config.energyCosts.sleep;
+        break;
+
+      case CreatureAction.EMIT_SIGNAL:
+        this.energy -= this._config.energyCosts.emitSignal;
+        break;
+
+      case CreatureAction.EAT:
+        this.energy -= this._config.energyCosts.eat;
+        break;
+
+      case CreatureAction.DRINK:
+        this.energy -= this._config.energyCosts.drink;
+        break;
+
+      case CreatureAction.GATHER:
+        this.energy -= this._config.energyCosts.gather;
+        break;
+
+      case CreatureAction.ATTACK:
+        this.energy -= this._config.energyCosts.attack;
+        break;
+
+      case CreatureAction.DEFEND:
+        this.energy -= this._config.energyCosts.defend;
         break;
 
       default:
@@ -372,23 +386,32 @@ export class Creature implements ICreature {
         this.energy -= this._config.energyCosts.rest;
         break;
     }
-  }
 
-  /**
-   * Move the creature by the specified offset
-   */
-  private move(dx: number, dy: number): void {
-    const newX = this._position.x + dx;
-    const newY = this._position.y + dy;
+    // Update encounter history based on vision
+    if (this._lastSensoryData) {
+      for (const visionCell of this._lastSensoryData.vision) {
+        if (visionCell.entityType !== EntityType.EMPTY) {
+          this._state.encounterHistory.push(visionCell.entityType);
+        }
+      }
 
-    // Clamp to world boundaries
-    this._position.x = Math.max(
-      0,
-      Math.min(this._config.worldDimensions.width - 1, newX)
-    );
-    this._position.y = Math.max(
-      0,
-      Math.min(this._config.worldDimensions.height - 1, newY)
-    );
+      // Trim encounter history
+      if (
+        this._state.encounterHistory.length >
+        this._config.memory.encounterHistorySize
+      ) {
+        this._state.encounterHistory = this._state.encounterHistory.slice(
+          -this._config.memory.encounterHistorySize
+        );
+      }
+    }
+
+    // Update signal history
+    this._state.signalHistory.push(this._state.broadcastSignal);
+    if (
+      this._state.signalHistory.length > this._config.memory.signalHistorySize
+    ) {
+      this._state.signalHistory.shift();
+    }
   }
 }

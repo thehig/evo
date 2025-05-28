@@ -9,11 +9,30 @@
  * Available creature actions
  */
 export enum CreatureAction {
+  // 8-directional movement
   MOVE_NORTH = "move_north",
   MOVE_SOUTH = "move_south",
   MOVE_EAST = "move_east",
   MOVE_WEST = "move_west",
+  MOVE_NORTHEAST = "move_northeast",
+  MOVE_NORTHWEST = "move_northwest",
+  MOVE_SOUTHEAST = "move_southeast",
+  MOVE_SOUTHWEST = "move_southwest",
+
+  // Energy conservation
   REST = "rest",
+  SLEEP = "sleep", // Deep rest with higher energy gain but vulnerability
+
+  // Communication
+  EMIT_SIGNAL = "emit_signal",
+
+  // Special actions based on cell contents
+  EAT = "eat", // Consume food in current cell
+  DRINK = "drink", // Consume water in current cell
+  GATHER = "gather", // Collect resources/minerals
+  ATTACK = "attack", // Attack another creature
+  DEFEND = "defend", // Defensive stance
+
   // Future actions can be added here
 }
 
@@ -129,11 +148,35 @@ export interface ICreatureState {
  * Energy costs for different actions
  */
 export interface IEnergyCosts {
-  /** Energy cost for movement actions */
+  /** Energy cost for cardinal movement actions (N, S, E, W) */
   movement: number;
+
+  /** Energy cost for diagonal movement actions (NE, NW, SE, SW) */
+  diagonalMovement: number;
 
   /** Energy cost for resting (negative = energy gain) */
   rest: number;
+
+  /** Energy cost for sleeping (negative = higher energy gain than rest) */
+  sleep: number;
+
+  /** Energy cost for emitting communication signals */
+  emitSignal: number;
+
+  /** Energy cost for eating (negative = energy gain from food) */
+  eat: number;
+
+  /** Energy cost for drinking (negative = energy gain from water) */
+  drink: number;
+
+  /** Energy cost for gathering resources */
+  gather: number;
+
+  /** Energy cost for attacking */
+  attack: number;
+
+  /** Energy cost for defending */
+  defend: number;
 
   /** Base metabolic cost per tick */
   metabolism: number;
@@ -212,9 +255,17 @@ export const DEFAULT_CREATURE_CONFIG: ICreatureConfig = {
   initialEnergy: 1.0,
   maxEnergy: 1.0,
   energyCosts: {
-    movement: 0.05,
+    movement: 0.05, // Cardinal movement
+    diagonalMovement: 0.07, // Diagonal movement costs more (sqrt(2) factor)
     rest: -0.02, // Negative means energy gain
-    metabolism: 0.001,
+    sleep: -0.05, // Higher energy gain than rest but more vulnerable
+    emitSignal: 0.03, // Communication costs energy
+    eat: -0.15, // Eating provides significant energy
+    drink: -0.08, // Drinking provides moderate energy
+    gather: 0.04, // Gathering resources costs energy
+    attack: 0.12, // Attacking is energy intensive
+    defend: 0.06, // Defending costs moderate energy
+    metabolism: 0.001, // Base metabolic cost
   },
   maxAge: 10000,
   worldDimensions: {
@@ -235,3 +286,75 @@ export const DEFAULT_CREATURE_CONFIG: ICreatureConfig = {
   signalRange: 5.0,
   signalStrength: 1.0,
 };
+
+/**
+ * Result of an action attempt
+ */
+export interface ActionResult {
+  /** Whether the action was successfully executed */
+  success: boolean;
+
+  /** Energy change from the action (positive = gained, negative = lost) */
+  energyChange: number;
+
+  /** Reason for failure if action was not successful */
+  failureReason?: string;
+
+  /** Additional effects or information from the action */
+  effects?: {
+    /** Damage dealt (for attack actions) */
+    damageDealt?: number;
+
+    /** Damage received (for defend actions or being attacked) */
+    damageReceived?: number;
+
+    /** Resources gathered (for gather actions) */
+    resourcesGathered?: number;
+
+    /** Signal strength emitted (for emit_signal actions) */
+    signalEmitted?: number;
+  };
+}
+
+/**
+ * Action conflict resolution data
+ */
+export interface ActionConflict {
+  /** Creatures involved in the conflict */
+  creatures: string[]; // Creature IDs
+
+  /** Actions being attempted */
+  actions: CreatureAction[];
+
+  /** Cell position where conflict occurs */
+  position: { x: number; y: number };
+
+  /** Type of conflict */
+  conflictType: "movement" | "resource" | "combat" | "communication";
+}
+
+/**
+ * Action feedback for neural network learning
+ */
+export interface ActionFeedback {
+  /** The action that was attempted */
+  action: CreatureAction;
+
+  /** Result of the action */
+  result: ActionResult;
+
+  /** Environmental context when action was taken */
+  context: {
+    /** Energy level before action (0.0 - 1.0) */
+    energyBefore: number;
+
+    /** Entities visible in the area */
+    nearbyEntities: EntityType[];
+
+    /** Signals detected in the area */
+    nearbySignals: number[];
+  };
+
+  /** Reward signal for learning (-1.0 to 1.0) */
+  reward: number;
+}

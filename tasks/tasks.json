@@ -170,14 +170,64 @@
       "id": 10,
       "title": "Implement Creature Action System",
       "description": "Create the action system for creatures to interact with their environment based on neural network outputs.",
-      "status": "pending",
+      "status": "in-progress",
       "dependencies": [
         5,
         9
       ],
       "priority": "high",
       "details": "Implement 8-directional movement. Create rest/sleep actions for energy conservation. Add communication signal emission. Implement special actions based on cell contents. Create action resolution system for conflicting actions. Add energy cost calculation for different actions. Implement action feedback for neural network learning.",
-      "testStrategy": "Unit tests for each action type. Verify energy costs are correctly applied. Test action resolution with multiple creatures. Ensure deterministic behavior for action selection. Test special actions in different contexts."
+      "testStrategy": "Unit tests for each action type. Verify energy costs are correctly applied. Test action resolution with multiple creatures. Ensure deterministic behavior for action selection. Test special actions in different contexts.",
+      "subtasks": [
+        {
+          "id": 10.1,
+          "title": "Fix TypeScript Compilation Issues",
+          "description": "Resolve TypeScript errors in action-system.ts and related files",
+          "status": "done",
+          "details": "Removed unused imports (IEnergyCosts). Fixed type error with creature.getConfig() by importing ICreatureConfig and using proper type casting. Removed unused variables (energyBefore, position, creatureId). Updated sensory system action map to include all 16 CreatureAction enum values with proper numeric encodings."
+        },
+        {
+          "id": 10.2,
+          "title": "Fix Action Feedback Generation",
+          "description": "Repair the generateFeedback() method to properly store feedback",
+          "status": "to-do",
+          "details": "Debug and fix the feedback generation mechanism in ActionSystem. Ensure feedback is properly stored for neural network learning. Fix action history tracking to record all feedback correctly."
+        },
+        {
+          "id": 10.3,
+          "title": "Integrate ActionSystem with Creature Class",
+          "description": "Connect ActionSystem to Creature for actual movement execution",
+          "status": "to-do",
+          "details": "Modify Creature.executeAction() to utilize the ActionSystem. Ensure movement actions properly update creature position. Create proper connection between action execution in Creature class and the ActionSystem."
+        },
+        {
+          "id": 10.4,
+          "title": "Fix Energy Calculation Issues",
+          "description": "Debug and fix NaN values in energy calculations",
+          "status": "to-do",
+          "details": "Identify and fix the source of NaN values in energy calculations. Repair metabolic cost calculations. Ensure hunger calculations work correctly without being affected by NaN energy values."
+        },
+        {
+          "id": 10.5,
+          "title": "Fix State Management for Action Timing",
+          "description": "Ensure ticksSinceLastAction resets properly after actions",
+          "status": "to-do",
+          "details": "Debug and fix the state management issue where ticksSinceLastAction is not resetting properly after actions are taken. Ensure proper timing between actions."
+        },
+        {
+          "id": 10.6,
+          "title": "Final Testing and Integration",
+          "description": "Ensure all tests pass and the action system is fully functional",
+          "status": "to-do",
+          "details": "Run all tests to verify fixes. Ensure all 12 previously failing tests now pass. Verify action system works correctly in the simulation environment. Document any edge cases or limitations discovered."
+        }
+      ],
+      "progress": {
+        "completedSubtasks": 1,
+        "totalSubtasks": 6,
+        "buildStatus": "PASSING",
+        "testStatus": "FAILING (12 tests)"
+      }
     },
     {
       "id": 11,

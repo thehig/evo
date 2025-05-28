@@ -52,6 +52,15 @@ export interface ICreature extends IEntity {
 
   /** Reproduce with another creature */
   reproduce(partner: ICreature): ICreature | null;
+
+  /** Get creature configuration */
+  getConfig(): unknown; // Will be typed properly when creature config is imported
+
+  /** Get current broadcast signal strength */
+  getBroadcastSignal(): number;
+
+  /** Set broadcast signal strength */
+  setBroadcastSignal(signal: number): void;
 }
 
 /**
