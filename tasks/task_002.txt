@@ -1,0 +1,11 @@
+# Task ID: 2
+# Title: Implement Core Simulation Engine Interface
+# Status: pending
+# Dependencies: 1
+# Priority: high
+# Description: Define the core interfaces and abstract classes for the simulation engine that will be used by both Training and World simulators.
+# Details:
+Create interfaces for: ISimulationEngine, IWorld, IEntity, ICreature. Implement tick-based processing system with configurable tick rate. Define event system for simulation events. Create deterministic random number generator with seed support for reproducibility. Implement basic simulation loop with start/pause/stop functionality.
+
+# Test Strategy:
+Unit tests for deterministic behavior - given the same seed, simulation should produce identical results. Test tick processing and event propagation. Verify simulation control functions (start/pause/stop).

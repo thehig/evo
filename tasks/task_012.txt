@@ -1,0 +1,11 @@
+# Task ID: 12
+# Title: Implement Training Simulator Core
+# Status: pending
+# Dependencies: 4, 6, 10
+# Priority: high
+# Description: Create the core functionality for the Training Simulator component.
+# Details:
+Implement TrainingSimulator class. Create scenario management system. Implement genetic algorithm cycle (initial generation, simulation run, fitness evaluation, selection, reproduction, iteration). Add performance monitoring for evolution progress. Create generation tracking and statistics collection. Implement configurable simulation parameters.
+
+# Test Strategy:
+Integration tests for complete genetic algorithm cycle. Verify fitness evaluation correctly identifies successful creatures. Test multiple generations for evolutionary progress. Ensure statistics are correctly tracked and reported. Test with different scenario configurations.

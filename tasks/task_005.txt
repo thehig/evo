@@ -1,0 +1,11 @@
+# Task ID: 5
+# Title: Implement Basic Creature Class
+# Status: pending
+# Dependencies: 3
+# Priority: high
+# Description: Create the foundational Creature class with neural network integration, energy system, and basic actions.
+# Details:
+Implement Creature class with position, energy level, and neural network. Create basic action system (movement, rest). Implement energy consumption for different actions. Add sensory input processing for neural network. Create internal state tracking (hunger, etc.). Implement deterministic behavior processing.
+
+# Test Strategy:
+Unit tests for creature behavior with fixed neural networks. Verify energy consumption for different actions. Test sensory input processing. Ensure deterministic behavior - identical inputs produce identical actions.

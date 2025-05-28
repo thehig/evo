@@ -1,0 +1,11 @@
+# Task ID: 6
+# Title: Implement World Grid System
+# Status: pending
+# Dependencies: 2
+# Priority: high
+# Description: Create the grid-based world system with support for entities, terrain, and resources.
+# Details:
+Implement World class with configurable dimensions. Create grid system for entity positioning. Implement terrain types with different movement costs. Add resource distribution system. Create obstacle placement. Support for entity queries within specific ranges. Implement chunk-based loading for large worlds.
+
+# Test Strategy:
+Unit tests for world creation with different sizes. Test entity placement and retrieval. Verify terrain and resource distribution. Test chunk loading/unloading for large worlds. Ensure grid operations are performant.

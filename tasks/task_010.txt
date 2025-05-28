@@ -1,0 +1,11 @@
+# Task ID: 10
+# Title: Implement Creature Action System
+# Status: pending
+# Dependencies: 5, 9
+# Priority: high
+# Description: Create the action system for creatures to interact with their environment based on neural network outputs.
+# Details:
+Implement 8-directional movement. Create rest/sleep actions for energy conservation. Add communication signal emission. Implement special actions based on cell contents. Create action resolution system for conflicting actions. Add energy cost calculation for different actions. Implement action feedback for neural network learning.
+
+# Test Strategy:
+Unit tests for each action type. Verify energy costs are correctly applied. Test action resolution with multiple creatures. Ensure deterministic behavior for action selection. Test special actions in different contexts.

@@ -1,0 +1,11 @@
+# Task ID: 22
+# Title: Implement World Simulator UI
+# Status: pending
+# Dependencies: 13, 17, 20
+# Priority: medium
+# Description: Create the user interface for the World Simulator component.
+# Details:
+Implement large world navigation with zoom and pan. Create species management interface. Add ecosystem analytics dashboard. Implement time controls for simulation speed. Create event notification system. Add minimap for large world navigation. Implement biome selection tools. Create species introduction interface.
+
+# Test Strategy:
+Manual testing of UI components. Verify navigation controls work correctly with large worlds. Test time controls at different speeds. Ensure notifications are clear and informative. Test with different world sizes and configurations.

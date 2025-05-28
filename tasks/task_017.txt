@@ -1,0 +1,11 @@
+# Task ID: 17
+# Title: Implement WebGL Renderer Foundation
+# Status: pending
+# Dependencies: 8
+# Priority: medium
+# Description: Create the foundation for a WebGL-based renderer using either PhaserJS or P5.js.
+# Details:
+Implement WebGLRenderer class implementing IRenderer. Create integration with chosen library (PhaserJS or P5.js). Implement basic sprite rendering for entities. Add camera controls for navigation. Create simple animations for creature actions. Implement terrain and resource visualization.
+
+# Test Strategy:
+Manual testing of visual output. Verify all entity types are correctly displayed. Test camera controls and navigation. Ensure performance is acceptable for large worlds. Test on different browsers and devices.

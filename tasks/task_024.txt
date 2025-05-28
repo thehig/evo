@@ -1,0 +1,11 @@
+# Task ID: 24
+# Title: Implement Performance Optimization
+# Status: pending
+# Dependencies: 12, 13, 23
+# Priority: medium
+# Description: Optimize the simulation system for performance with large worlds and populations.
+# Details:
+Implement profiling for performance bottlenecks. Optimize neural network processing for batch operations. Add spatial partitioning for efficient entity queries. Implement multi-threading where beneficial. Create memory optimization for large worlds. Add configurable detail levels for performance tuning. Implement Windows-specific optimizations as specified in PRD.
+
+# Test Strategy:
+Benchmark performance before and after optimizations. Verify simulation can handle specified creature counts (100-500 for Training, 1000-10000 for World). Test memory usage with large worlds. Ensure optimizations don't affect simulation determinism.

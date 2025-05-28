@@ -1,0 +1,11 @@
+# Task ID: 1
+# Title: Setup Project Repository and Structure
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Initialize the project repository with TypeScript, Vite, and testing framework. Set up the basic folder structure following Windows conventions.
+# Details:
+Create a new project using Vite with TypeScript. Configure Vitest for testing. Set up folders: src/, tests/, assets/. Configure TypeScript for Windows path conventions (backslashes) and CRLF line endings. Set up .gitignore and basic README.md. Create initial package.json with required dependencies.
+
+# Test Strategy:
+Verify project builds successfully. Ensure TypeScript compiler options are correctly set for Windows environment. Confirm test runner works with a simple test case.

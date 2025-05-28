@@ -1,0 +1,11 @@
+# Task ID: 16
+# Title: Implement ASCII Renderer
+# Status: pending
+# Dependencies: 8
+# Priority: low
+# Description: Create a console-based ASCII renderer for text visualization of the simulation.
+# Details:
+Implement ASCIIRenderer class implementing IRenderer. Create character mappings for different entity types. Implement grid-based console output. Add color support where available. Create compact representation for large worlds. Implement basic animation for simulation progress.
+
+# Test Strategy:
+Manual testing of ASCII output for readability. Verify all entity types are distinguishable. Test with different world sizes. Ensure performance is acceptable for real-time visualization. Test on different console environments.

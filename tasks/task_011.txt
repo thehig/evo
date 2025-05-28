@@ -1,0 +1,11 @@
+# Task ID: 11
+# Title: Implement Creature Interaction System
+# Status: pending
+# Dependencies: 5, 10
+# Priority: medium
+# Description: Create the system for creature-creature and creature-environment interactions.
+# Details:
+Implement interaction matrix as specified in PRD. Create combat system with energy-based resolution. Implement reproduction system with genetic combination. Add food consumption mechanics. Create obstacle interaction handling. Implement terrain-specific interactions. Add signal-based communication between creatures.
+
+# Test Strategy:
+Unit tests for each interaction type. Verify combat outcomes are deterministic. Test reproduction and genetic inheritance. Ensure food consumption correctly affects energy. Test obstacle and terrain interactions. Verify signal communication works correctly.

@@ -1,0 +1,11 @@
+# Task ID: 18
+# Title: Implement Communication System
+# Status: pending
+# Dependencies: 9, 10
+# Priority: medium
+# Description: Create the signal-based communication system for creature interactions.
+# Details:
+Implement signal grid overlay for world. Create different signal types and frequencies. Add signal decay over time and distance. Implement energy cost for signal emission. Create signal detection in creature sensory system. Add signal interpretation in neural networks. Implement signal visualization in renderers.
+
+# Test Strategy:
+Unit tests for signal emission and detection. Verify signal decay works correctly. Test energy costs for different signal strengths. Ensure signals are correctly processed by creature sensory systems. Test signal propagation in different world configurations.

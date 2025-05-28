@@ -1,0 +1,11 @@
+# Task ID: 9
+# Title: Implement Creature Sensory System
+# Status: pending
+# Dependencies: 5, 6
+# Priority: high
+# Description: Create the sensory system for creatures to perceive their environment.
+# Details:
+Implement configurable vision range (3x3 to 7x7 grid). Create entity classification system (friend/enemy/food/obstacle). Implement distance encoding for detected entities. Add signal detection for communication. Create memory inputs for recent experiences. Integrate sensory processing with neural network inputs.
+
+# Test Strategy:
+Unit tests for different sensor configurations. Verify entity detection and classification. Test distance encoding accuracy. Ensure sensory inputs are correctly formatted for neural networks. Test with different world configurations.

@@ -1,0 +1,9 @@
+{
+  "name": "neural-evolution-simulator",
+  "version": "0.1.0",
+  "description": "A two-part evolutionary simulation game where creatures controlled by neural networks evolve through genetic algorithms, consisting of a Training Simulator for species development and a World Simulator for large-scale ecosystem interactions",
+  "author": "Developer",
+  "type": "module",
+  "scripts": {},
+  "dependencies": {}
+}
