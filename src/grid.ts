@@ -1,4 +1,5 @@
 import p5 from "p5";
+import { CreatureBrain } from "./creatureBrain";
 
 export enum DietType {
   HERBIVORE = "Herbivore",
@@ -73,6 +74,7 @@ export class Creature extends Entity {
   public perceptionArc: number;
   public energy: number;
   public seed: string;
+  public brain: CreatureBrain; // Neural network brain
 
   public energyForReproduction: number = 150;
   public energyCostOfReproduction: number = 50;
@@ -93,7 +95,8 @@ export class Creature extends Entity {
     perceptionAngle: number = 0,
     perceptionArc: number = 45,
     energy: number = 100,
-    seed: string = ""
+    seed: string = "",
+    brain?: CreatureBrain
   ) {
     super(symbol, color, type, x, y);
     this.dietType = dietType;
@@ -105,6 +108,14 @@ export class Creature extends Entity {
     this.perceptionArc = perceptionArc;
     this.energy = energy;
     this.seed = seed;
+
+    // Initialize brain - either provided or create new one
+    if (brain) {
+      this.brain = brain;
+      this.brain.setCreature(this);
+    } else {
+      this.brain = new CreatureBrain(this);
+    }
   }
 
   static fromSeed(
@@ -113,7 +124,8 @@ export class Creature extends Entity {
     y: number = -1,
     defaultSymbol?: string,
     defaultColor?: string,
-    initialEnergy: number = 100
+    initialEnergy: number = 100,
+    brain?: CreatureBrain
   ): Creature | null {
     const attributes = parseSeed(seed);
     if (!attributes) {
@@ -168,7 +180,8 @@ export class Creature extends Entity {
       attributes.perceptionAngle,
       attributes.perceptionArc,
       initialEnergy,
-      seed
+      seed,
+      brain
     );
   }
 
@@ -213,11 +226,18 @@ export class Creature extends Entity {
       parentB.x,
       parentB.y
     );
-    // 1. Combine parent seeds
+
+    // 1. Combine parent seeds (still used for basic attributes)
     const offspringSeed = Creature.combineSeeds(parentA.seed, parentB.seed);
     console.log("[Debug] Offspring seed:", offspringSeed);
 
-    // 2. Create offspring (it won't have a position yet)
+    // 2. Create offspring brain from parent brains
+    const offspringBrain = CreatureBrain.createOffspringBrain(
+      parentA.brain,
+      parentB.brain
+    );
+
+    // 3. Create offspring (it won't have a position yet)
     const offspringInitialEnergy = 100;
     const offspring = Creature.fromSeed(
       offspringSeed,
@@ -225,7 +245,8 @@ export class Creature extends Entity {
       -1,
       undefined,
       undefined,
-      offspringInitialEnergy
+      offspringInitialEnergy,
+      offspringBrain
     );
     console.log(
       "[Debug] Offspring created:",
@@ -240,7 +261,10 @@ export class Creature extends Entity {
       return null;
     }
 
-    // 3. Attempt to find an empty adjacent cell for placement
+    // Update the brain's creature reference
+    offspringBrain.setCreature(offspring);
+
+    // 4. Attempt to find an empty adjacent cell for placement
     let placed = false;
     let offspringX = -1;
     let offspringY = -1;
@@ -323,6 +347,11 @@ export class Creature extends Entity {
   // Instance method for a creature to attempt reproduction
   public attemptReproduction(grid: Grid): Creature | null {
     if (!this.canReproduce()) {
+      return null;
+    }
+
+    // Use neural network to decide if reproduction should be attempted
+    if (!this.brain.shouldAttemptReproduction(grid)) {
       return null;
     }
 
@@ -450,18 +479,9 @@ export class Creature extends Entity {
     return null; // No edible food found in adjacent cells
   }
 
-  getNextMove(): { newX: number; newY: number } | null {
-    const possibleMoves = [
-      { dx: 0, dy: -1 },
-      { dx: 1, dy: 0 },
-      { dx: 0, dy: 1 },
-      { dx: -1, dy: 0 },
-    ];
-
-    const move =
-      possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-
-    return { newX: this.x + move.dx, newY: this.y + move.dy };
+  getNextMove(grid: Grid): { newX: number; newY: number } | null {
+    // Use neural network brain to determine next move
+    return this.brain.processEnvironment(grid);
   }
 }
 

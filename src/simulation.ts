@@ -55,18 +55,19 @@ export class Simulation {
   }
 
   public manualStep(): void {
-    if (!this.isRunning) {
-      // Typically, manual step is for when simulation is paused
-      this.step();
-    } else {
-      console.warn("Manual step is ignored when simulation is running.");
-    }
+    // Allow manual step regardless of running state
+    this.performStep();
+    console.log(`Manual step completed. Tick: ${this.tickCount}`);
   }
 
   // The main simulation step
   private step(): void {
     if (!this.isRunning) return;
+    this.performStep();
+  }
 
+  // Core step logic extracted to be reusable
+  private performStep(): void {
     // console.log(`Tick: ${this.tickCount}`);
 
     const creatures = [...this.grid.getCreatures()]; // Operate on a copy for consistent behavior during the tick
@@ -109,7 +110,7 @@ export class Simulation {
           continue;
         }
 
-        const move = creature.getNextMove();
+        const move = creature.getNextMove(this.grid);
         if (move) {
           if (this.grid.moveEntity(creature, move.newX, move.newY)) {
             // console.log(
