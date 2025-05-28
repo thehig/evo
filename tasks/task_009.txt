@@ -1,6 +1,6 @@
 # Task ID: 9
 # Title: Implement Creature Sensory System
-# Status: pending
+# Status: done
 # Dependencies: 5, 6
 # Priority: high
 # Description: Create the sensory system for creatures to perceive their environment.

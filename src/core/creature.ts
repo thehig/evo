@@ -7,12 +7,15 @@
 
 import { ICreature } from "./interfaces";
 import { INeuralNetwork } from "../neural/types";
+import { World } from "../world/World";
+import { SensorySystem } from "./sensory-system";
 import {
   CreatureAction,
   ISensoryData,
   ICreatureState,
   ICreatureConfig,
   DEFAULT_CREATURE_CONFIG,
+  EntityType,
 } from "./creature-types";
 
 /**
@@ -31,6 +34,7 @@ export class Creature implements ICreature {
   private _state: ICreatureState;
   private _lastSensoryData: ISensoryData | null = null;
   private _lastOutput: number[] | null = null;
+  private _sensorySystem: SensorySystem | null = null;
 
   constructor(
     id: string,
@@ -45,12 +49,24 @@ export class Creature implements ICreature {
     this._energy = this._config.initialEnergy;
     this._genome = null; // Placeholder for genetic system
 
-    // Initialize internal state
+    // Initialize internal state with memory arrays
     this._state = {
       hunger: 0.0,
       lastAction: null,
       ticksSinceLastAction: 0,
+      energyHistory: [this._energy],
+      actionHistory: [],
+      encounterHistory: [],
+      signalHistory: [],
+      broadcastSignal: 0.0,
     };
+  }
+
+  /**
+   * Set the sensory system (called when creature is added to world)
+   */
+  setSensorySystem(sensorySystem: SensorySystem): void {
+    this._sensorySystem = sensorySystem;
   }
 
   // IEntity implementation
@@ -88,7 +104,17 @@ export class Creature implements ICreature {
   }
 
   set energy(value: number) {
+    const oldEnergy = this._energy;
     this._energy = Math.max(0, Math.min(this._config.maxEnergy, value));
+
+    // Update energy history
+    this._state.energyHistory.push(this._energy);
+    if (
+      this._state.energyHistory.length > this._config.memory.energyHistorySize
+    ) {
+      this._state.energyHistory.shift();
+    }
+
     if (this._energy <= 0) {
       this._alive = false;
     }
@@ -137,16 +163,27 @@ export class Creature implements ICreature {
    * Process sensory input and make decisions using neural network
    */
   think(): void {
-    if (!this._alive) {
+    if (!this._alive || !this._sensorySystem) {
       return;
     }
 
-    // Gather sensory data
-    const sensoryData = this.gatherSensoryData();
+    // Gather sensory data using the sensory system
+    const sensoryData = this._sensorySystem.gatherSensoryData(
+      this,
+      this._config.vision,
+      this._config.memory,
+      this._config.signalRange,
+      this._state.energyHistory,
+      this._state.actionHistory,
+      this._state.encounterHistory,
+      this._state.signalHistory,
+      this._state.broadcastSignal
+    );
+
     this._lastSensoryData = sensoryData;
 
     // Convert sensory data to neural network input
-    const inputs = this.sensoryDataToInputs(sensoryData);
+    const inputs = this._sensorySystem.convertToNeuralInputs(sensoryData);
 
     // Process through neural network
     this._lastOutput = this._brain.process(inputs);
@@ -169,6 +206,41 @@ export class Creature implements ICreature {
     // Update state
     this._state.lastAction = action;
     this._state.ticksSinceLastAction = 0;
+
+    // Update action history
+    this._state.actionHistory.push(action);
+    if (
+      this._state.actionHistory.length > this._config.memory.actionHistorySize
+    ) {
+      this._state.actionHistory.shift();
+    }
+
+    // Update encounter history based on vision
+    if (this._lastSensoryData) {
+      for (const visionCell of this._lastSensoryData.vision) {
+        if (visionCell.entityType !== EntityType.EMPTY) {
+          this._state.encounterHistory.push(visionCell.entityType);
+        }
+      }
+
+      // Trim encounter history
+      if (
+        this._state.encounterHistory.length >
+        this._config.memory.encounterHistorySize
+      ) {
+        this._state.encounterHistory = this._state.encounterHistory.slice(
+          -this._config.memory.encounterHistorySize
+        );
+      }
+    }
+
+    // Update signal history (placeholder for now)
+    this._state.signalHistory.push(this._state.broadcastSignal);
+    if (
+      this._state.signalHistory.length > this._config.memory.signalHistorySize
+    ) {
+      this._state.signalHistory.shift();
+    }
   }
 
   /**
@@ -216,61 +288,17 @@ export class Creature implements ICreature {
   }
 
   /**
-   * Gather sensory information from the environment
+   * Set broadcast signal strength
    */
-  private gatherSensoryData(): ISensoryData {
-    // Normalize position to 0-1 range
-    const positionX = this._position.x / this._config.worldDimensions.width;
-    const positionY = this._position.y / this._config.worldDimensions.height;
-
-    // Normalize age to 0-1 range
-    const ageNormalized = this._age / this._config.maxAge;
-
-    // Simple vision system - for now just return position-based values
-    // This will be expanded when the world system is implemented
-    const vision = this.generateSimpleVision();
-
-    return {
-      energy: this._energy,
-      ageNormalized: Math.min(1.0, ageNormalized),
-      positionX: Math.max(0, Math.min(1.0, positionX)),
-      positionY: Math.max(0, Math.min(1.0, positionY)),
-      vision,
-      hunger: this._state.hunger,
-    };
+  setBroadcastSignal(signal: number): void {
+    this._state.broadcastSignal = Math.max(0, Math.min(1, signal));
   }
 
   /**
-   * Generate simple vision data based on position
-   * This is a placeholder until the world system is implemented
+   * Get current broadcast signal
    */
-  private generateSimpleVision(): number[] {
-    const visionSize = (this._config.visionRange * 2 + 1) ** 2;
-    const vision: number[] = new Array(visionSize).fill(0);
-
-    // For now, just fill with normalized position data
-    // This will be replaced with actual world sensing
-    for (let i = 0; i < vision.length; i++) {
-      vision[i] = ((this._position.x + this._position.y + i) % 100) / 100;
-    }
-
-    return vision;
-  }
-
-  /**
-   * Convert sensory data to neural network inputs
-   */
-  private sensoryDataToInputs(sensoryData: ISensoryData): number[] {
-    const inputs: number[] = [
-      sensoryData.energy,
-      sensoryData.ageNormalized,
-      sensoryData.positionX,
-      sensoryData.positionY,
-      sensoryData.hunger,
-      ...sensoryData.vision,
-    ];
-
-    return inputs;
+  getBroadcastSignal(): number {
+    return this._state.broadcastSignal;
   }
 
   /**

@@ -14,5 +14,6 @@ export { Random } from "./random";
 export { EventSystem, SimulationEvents } from "./events";
 export { SimulationEngine } from "./simulation-engine";
 export { Creature } from "./creature";
+export { SensorySystem } from "./sensory-system";
 
 export const CORE_MODULE_VERSION = "0.1.0";

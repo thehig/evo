@@ -18,6 +18,56 @@ export enum CreatureAction {
 }
 
 /**
+ * Entity types that can be detected by creature senses
+ */
+export enum EntityType {
+  EMPTY = "empty",
+  CREATURE_FRIEND = "creature_friend",
+  CREATURE_ENEMY = "creature_enemy",
+  FOOD = "food",
+  WATER = "water",
+  OBSTACLE = "obstacle",
+  SHELTER = "shelter",
+  MINERAL = "mineral",
+  UNKNOWN = "unknown",
+}
+
+/**
+ * Vision cell data for a single grid position
+ */
+export interface VisionCell {
+  /** Type of entity/terrain in this cell */
+  entityType: EntityType;
+
+  /** Distance from creature (0.0 = same cell, 1.0 = max vision range) */
+  distance: number;
+
+  /** Relative position from creature (-1.0 to 1.0 for each axis) */
+  relativeX: number;
+  relativeY: number;
+
+  /** Signal strength if this is a communicating creature (0.0 - 1.0) */
+  signalStrength: number;
+}
+
+/**
+ * Memory of recent experiences
+ */
+export interface MemoryData {
+  /** Recent energy changes (positive = gained, negative = lost) */
+  recentEnergyChanges: number[];
+
+  /** Recent actions taken */
+  recentActions: CreatureAction[];
+
+  /** Recent entity encounters */
+  recentEncounters: EntityType[];
+
+  /** Recent signal detections */
+  recentSignals: number[];
+}
+
+/**
  * Creature sensory input data
  */
 export interface ISensoryData {
@@ -33,11 +83,17 @@ export interface ISensoryData {
   /** Position Y normalized (0.0 - 1.0) */
   positionY: number;
 
-  /** Vision data - simplified for now */
-  vision: number[];
+  /** Vision data - grid of detected entities */
+  vision: VisionCell[];
 
   /** Internal hunger state (0.0 - 1.0) */
   hunger: number;
+
+  /** Memory of recent experiences */
+  memory: MemoryData;
+
+  /** Current signal being broadcast (0.0 - 1.0) */
+  currentSignal: number;
 }
 
 /**
@@ -52,6 +108,21 @@ export interface ICreatureState {
 
   /** Number of ticks since last action */
   ticksSinceLastAction: number;
+
+  /** Energy history for memory system */
+  energyHistory: number[];
+
+  /** Action history for memory system */
+  actionHistory: CreatureAction[];
+
+  /** Entity encounter history */
+  encounterHistory: EntityType[];
+
+  /** Signal detection history */
+  signalHistory: number[];
+
+  /** Current signal being broadcast */
+  broadcastSignal: number;
 }
 
 /**
@@ -66,6 +137,37 @@ export interface IEnergyCosts {
 
   /** Base metabolic cost per tick */
   metabolism: number;
+}
+
+/**
+ * Vision configuration
+ */
+export interface VisionConfig {
+  /** Vision range in cells (1 = 3x3, 2 = 5x5, 3 = 7x7, etc.) */
+  range: number;
+
+  /** Maximum distance for entity detection */
+  maxDistance: number;
+
+  /** Whether to include diagonal cells */
+  includeDiagonals: boolean;
+}
+
+/**
+ * Memory configuration
+ */
+export interface MemoryConfig {
+  /** Number of recent energy changes to remember */
+  energyHistorySize: number;
+
+  /** Number of recent actions to remember */
+  actionHistorySize: number;
+
+  /** Number of recent encounters to remember */
+  encounterHistorySize: number;
+
+  /** Number of recent signals to remember */
+  signalHistorySize: number;
 }
 
 /**
@@ -90,8 +192,17 @@ export interface ICreatureConfig {
     height: number;
   };
 
-  /** Vision range (radius) */
-  visionRange: number;
+  /** Vision configuration */
+  vision: VisionConfig;
+
+  /** Memory configuration */
+  memory: MemoryConfig;
+
+  /** Signal transmission range */
+  signalRange: number;
+
+  /** Signal transmission strength */
+  signalStrength: number;
 }
 
 /**
@@ -110,5 +221,17 @@ export const DEFAULT_CREATURE_CONFIG: ICreatureConfig = {
     width: 100,
     height: 100,
   },
-  visionRange: 1,
+  vision: {
+    range: 2, // 5x5 grid
+    maxDistance: 3.0,
+    includeDiagonals: true,
+  },
+  memory: {
+    energyHistorySize: 10,
+    actionHistorySize: 5,
+    encounterHistorySize: 8,
+    signalHistorySize: 6,
+  },
+  signalRange: 5.0,
+  signalStrength: 1.0,
 };

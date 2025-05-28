@@ -3,6 +3,8 @@
  */
 
 import { IWorld, IEntity, ICreature, IRandom } from "../core/interfaces";
+import { SensorySystem } from "../core/sensory-system";
+import { Creature } from "../core/creature";
 import {
   Position,
   TerrainType,
@@ -54,6 +56,7 @@ export class World implements IWorld {
   private readonly config: WorldConfig;
   private readonly random: IRandom;
   private readonly generationOptions: WorldGenerationOptions;
+  private readonly sensorySystem: SensorySystem;
 
   // Grid system
   private grid: GridCell[][] = [];
@@ -78,6 +81,9 @@ export class World implements IWorld {
       ...DEFAULT_GENERATION_OPTIONS,
       ...generationOptions,
     };
+
+    // Initialize sensory system
+    this.sensorySystem = new SensorySystem(this);
 
     this.initialize();
   }
@@ -122,6 +128,11 @@ export class World implements IWorld {
     // Add to creature set if it's a creature
     if (this.isCreature(entity)) {
       this.creatureSet.add(entity);
+
+      // Set up sensory system for creatures
+      if (entity instanceof Creature) {
+        entity.setSensorySystem(this.sensorySystem);
+      }
     }
 
     // Add to grid cell

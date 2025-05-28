@@ -157,7 +157,7 @@
       "id": 9,
       "title": "Implement Creature Sensory System",
       "description": "Create the sensory system for creatures to perceive their environment.",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         5,
         6
