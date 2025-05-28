@@ -2,12 +2,7 @@
  * Renderer registry for managing multiple renderer implementations
  */
 
-import {
-  IRenderer,
-  RendererRegistration,
-  RendererFactory,
-  RendererCapabilities,
-} from "./types";
+import { IRenderer, RendererRegistration, RendererCapabilities } from "./types";
 import { NullRenderer } from "./NullRenderer";
 
 /**
@@ -192,7 +187,7 @@ export class RendererRegistry {
     this.register({
       id: "null",
       name: "Null Renderer",
-      factory: (config) => new NullRenderer(),
+      factory: (_config) => new NullRenderer(),
       defaultConfig: {
         enableEvents: true,
         logLevel: "info",

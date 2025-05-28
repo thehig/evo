@@ -8,9 +8,7 @@ import {
   ResourceType,
   ResourceNode,
   Position,
-  WorldConfig,
   WorldGenerationOptions,
-  GridCell,
 } from "./types";
 import { DEFAULT_TERRAIN_DISTRIBUTION, getResourceGeneration } from "./terrain";
 
@@ -21,7 +19,12 @@ export function generateTerrain(
   width: number,
   height: number,
   random: IRandom,
-  options: WorldGenerationOptions,
+  options: WorldGenerationOptions = {
+    terrainAlgorithm: "random",
+    resourcePlacement: "random",
+    obstaclePlacement: "random",
+    smoothingPasses: 3,
+  },
   terrainDistribution: Partial<Record<TerrainType, number>> = {}
 ): TerrainType[][] {
   const distribution = {
@@ -210,8 +213,6 @@ export function generateResources(
   density: number,
   placement: "random" | "clustered" | "terrain-based"
 ): ResourceNode[] {
-  const resources: ResourceNode[] = [];
-
   switch (placement) {
     case "random":
       return generateRandomResources(terrain, width, height, random, density);
@@ -299,7 +300,7 @@ function generateTerrainBasedResources(
  * Generate clustered resources
  */
 function generateClusteredResources(
-  terrain: TerrainType[][],
+  _terrain: TerrainType[][],
   width: number,
   height: number,
   random: IRandom,

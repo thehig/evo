@@ -486,8 +486,6 @@ export class World implements IWorld {
     }
 
     if (this.config.useChunking) {
-      const chunkX = Math.floor(x / this.config.chunkSize);
-      const chunkY = Math.floor(y / this.config.chunkSize);
       const chunk = this.ensureChunkLoaded(x, y);
 
       if (chunk) {

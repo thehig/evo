@@ -2,7 +2,6 @@
  * Renderer system types and interfaces
  */
 
-import { IEntity, ICreature } from "../core/interfaces";
 import {
   Position,
   TerrainType,

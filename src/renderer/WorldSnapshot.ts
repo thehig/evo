@@ -4,7 +4,7 @@
 
 import { IEntity, ICreature } from "../core/interfaces";
 import { World } from "../world/World";
-import { ResourceType, Position } from "../world/types";
+import { ResourceType } from "../world/types";
 import {
   WorldSnapshot,
   EntitySnapshot,

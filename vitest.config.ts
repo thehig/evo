@@ -7,6 +7,9 @@ export default defineConfig({
     environment: "node",
     include: ["tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
     exclude: ["node_modules", "dist", ".idea", ".git", ".cache"],
+    typecheck: {
+      tsconfig: "./tsconfig.test.json",
+    },
   },
   resolve: {
     alias: {

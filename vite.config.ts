@@ -28,10 +28,6 @@ export default defineConfig({
       },
     },
   },
-  test: {
-    globals: true,
-    environment: "node",
-  },
   esbuild: {
     target: "es2020",
   },

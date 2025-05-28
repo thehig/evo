@@ -3,25 +3,25 @@
  */
 
 import { World } from "../../src/world/World";
+import { Random } from "../../src/core/random";
+import { IEntity, ICreature } from "../../src/core/interfaces";
 import {
   TerrainType,
-  ResourceType,
+  Position,
   WorldConfig,
   WorldGenerationOptions,
 } from "../../src/world/types";
-import { Random } from "../../src/core/random";
-import { IEntity, ICreature } from "../../src/core/interfaces";
 
 // Mock entity for testing
 class MockEntity implements IEntity {
   constructor(
-    public readonly id: string,
-    public position: { x: number; y: number },
+    public id: string,
+    public position: Position,
     public active: boolean = true
   ) {}
 
-  update(deltaTime: number): void {
-    // Mock update - do nothing
+  update(_deltaTime: number): void {
+    // Mock implementation
   }
 
   destroy(): void {
@@ -30,23 +30,38 @@ class MockEntity implements IEntity {
 }
 
 // Mock creature for testing
-class MockCreature extends MockEntity implements ICreature {
-  public readonly genome = {};
-  public readonly brain = {};
-  public energy = 100;
-  public age = 0;
-  public alive = true;
+class MockCreature implements ICreature {
+  public genome: unknown = null;
+  public brain: unknown = null;
+  public energy: number = 1.0;
+  public age: number = 0;
+  public alive: boolean = true;
+
+  constructor(
+    public id: string,
+    public position: Position,
+    public active: boolean = true
+  ) {}
+
+  update(_deltaTime: number): void {
+    this.age++;
+  }
+
+  destroy(): void {
+    this.active = false;
+    this.alive = false;
+  }
+
+  reproduce(_partner: ICreature): ICreature | null {
+    return null;
+  }
 
   think(): void {
-    // Mock think - do nothing
+    // Mock implementation
   }
 
   act(): void {
-    // Mock act - do nothing
-  }
-
-  reproduce(partner: ICreature): ICreature | null {
-    return null;
+    // Mock implementation
   }
 }
 

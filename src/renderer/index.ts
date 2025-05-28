@@ -31,7 +31,7 @@ import { NullRenderer } from "./NullRenderer";
 import { RendererRegistry } from "./RendererRegistry";
 
 // Utility functions
-export const createNullRenderer = (config?: Record<string, unknown>) => {
+export const createNullRenderer = (_config?: Record<string, unknown>) => {
   return new NullRenderer();
 };
 

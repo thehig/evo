@@ -35,7 +35,7 @@ export class SensorySystem {
     creature: ICreature,
     visionConfig: VisionConfig,
     memoryConfig: MemoryConfig,
-    signalRange: number,
+    _signalRange: number,
     energyHistory: number[],
     actionHistory: CreatureAction[],
     encounterHistory: EntityType[],

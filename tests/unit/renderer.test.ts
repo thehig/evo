@@ -2,11 +2,8 @@
  * Renderer system tests
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
-  IRenderer,
-  RendererCapabilities,
-  WorldSnapshot,
   RendererEventType,
   NullRenderer,
   RendererRegistry,
@@ -15,7 +12,7 @@ import {
   getRendererRegistry,
 } from "../../src/renderer";
 import { World } from "../../src/world/World";
-import { TerrainType, ResourceType } from "../../src/world/types";
+import { ResourceType } from "../../src/world/types";
 import { Random } from "../../src/core/random";
 
 describe("Renderer System", () => {

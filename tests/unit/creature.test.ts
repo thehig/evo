@@ -26,12 +26,16 @@ describe("Creature", () => {
       rest: -0.05,
       metabolism: 0.01,
     },
-    maxAge: 1000,
+    maxAge: 100,
     worldDimensions: {
       width: 50,
       height: 50,
     },
-    visionRange: 1,
+    vision: {
+      range: 1,
+      maxDistance: 2.0,
+      includeDiagonals: true,
+    },
   };
 
   beforeEach(() => {
@@ -355,7 +359,7 @@ describe("Creature", () => {
 
   describe("Vision System", () => {
     it("should generate vision data of correct size", () => {
-      const visionRange = testConfig.visionRange!;
+      const visionRange = testConfig.vision!.range!;
       const expectedSize = (visionRange * 2 + 1) ** 2;
 
       creature.think();

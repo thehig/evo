@@ -2,7 +2,7 @@
  * World system types and interfaces
  */
 
-import { IEntity, ICreature } from "../core/interfaces";
+import { IEntity } from "../core/interfaces";
 
 /**
  * 2D position coordinates

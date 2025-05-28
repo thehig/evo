@@ -19,7 +19,6 @@ import {
 import {
   ensureDirectoryExists,
   fileExists,
-  getFileSize,
   serializeData,
   deserializeData,
   createFileMetadata,
@@ -99,7 +98,8 @@ export class PersistenceManager implements IPersistenceManager {
 
       // Serialize the data
       const serializedData = data.serialize();
-      let fileData = serializeData(serializedData, config.format);
+      const format = config.format || FileFormat.JSON;
+      let fileData = serializeData(serializedData, format);
 
       // Compress if requested
       if (config.compress) {
@@ -108,7 +108,7 @@ export class PersistenceManager implements IPersistenceManager {
 
       // Create file paths
       const safeFileName = getSafeFileName(fileName);
-      const extension = getFileExtension(config.format);
+      const extension = getFileExtension(format);
       const fullFileName = safeFileName.endsWith(extension)
         ? safeFileName
         : `${safeFileName}${extension}`;
@@ -121,7 +121,7 @@ export class PersistenceManager implements IPersistenceManager {
       // Create metadata
       const metadata = createFileMetadata(
         fileData,
-        config.format,
+        format,
         dataType,
         PERSISTENCE_VERSION,
         config.compress || false

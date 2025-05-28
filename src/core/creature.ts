@@ -7,7 +7,6 @@
 
 import { ICreature } from "./interfaces";
 import { INeuralNetwork } from "../neural/types";
-import { World } from "../world/World";
 import { SensorySystem } from "./sensory-system";
 import {
   CreatureAction,
@@ -104,7 +103,6 @@ export class Creature implements ICreature {
   }
 
   set energy(value: number) {
-    const oldEnergy = this._energy;
     this._energy = Math.max(0, Math.min(this._config.maxEnergy, value));
 
     // Update energy history
@@ -115,6 +113,10 @@ export class Creature implements ICreature {
       this._state.energyHistory.shift();
     }
 
+    // Update hunger based on energy level
+    this._state.hunger = Math.max(0, 1 - this._energy);
+
+    // Check if creature dies from energy depletion
     if (this._energy <= 0) {
       this._alive = false;
     }
@@ -131,7 +133,7 @@ export class Creature implements ICreature {
   /**
    * Update the creature for one simulation tick
    */
-  update(deltaTime: number): void {
+  update(_deltaTime: number): void {
     if (!this._active || !this._alive) {
       return;
     }
@@ -246,7 +248,7 @@ export class Creature implements ICreature {
   /**
    * Reproduce with another creature (placeholder implementation)
    */
-  reproduce(partner: ICreature): ICreature | null {
+  reproduce(_partner: ICreature): ICreature | null {
     // Placeholder - will be implemented with genetic system
     return null;
   }

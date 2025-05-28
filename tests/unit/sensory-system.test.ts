@@ -18,7 +18,6 @@ import {
   VisionConfig,
   MemoryConfig,
 } from "../../src/core/creature-types";
-import { TerrainType, ResourceType } from "../../src/world/types";
 
 describe("SensorySystem", () => {
   let world: World;
