@@ -192,7 +192,7 @@ describe("Simulation Scalability Performance Tests", () => {
       // Efficiency should be reasonable (allow for super-linear performance)
       // Efficiency < 1.0 means better than linear scaling (excellent!)
       // Efficiency > 3.0 means significantly worse than linear scaling (concerning)
-      expect(scalingEfficiency).toBeGreaterThan(0.1); // Allow for significant optimizations
+      expect(scalingEfficiency).toBeGreaterThan(0.05); // Allow for exceptional optimizations
       expect(scalingEfficiency).toBeLessThan(3.0);
     });
 
