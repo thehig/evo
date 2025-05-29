@@ -502,7 +502,7 @@
       "id": 23,
       "title": "Implement Comprehensive Test Suite",
       "description": "Create a comprehensive test suite covering all aspects of the simulation system.",
-      "status": "pending",
+      "status": "in-progress",
       "dependencies": [
         12,
         13,
@@ -511,7 +511,106 @@
       ],
       "priority": "high",
       "details": "Implement unit tests for all core components. Create integration tests for system interactions. Add scenario tests with expected outcomes. Implement performance tests for scalability. Create determinism tests for reproducibility. Add save/load validation tests. Implement regression tests for critical functionality.",
-      "testStrategy": "Run tests automatically in CI pipeline. Verify test coverage meets >90% target. Ensure determinism tests pass across different environments. Test performance against established benchmarks. Verify all critical functionality is covered by tests."
+      "testStrategy": "Run tests automatically in CI pipeline. Verify test coverage meets >90% target. Ensure determinism tests pass across different environments. Test performance against established benchmarks. Verify all critical functionality is covered by tests.",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Set Up Test Framework and Structure",
+          "description": "Establish the testing framework, directory structure, and common utilities for all test types",
+          "dependencies": [],
+          "details": "1. Select and configure appropriate testing frameworks (e.g., Jest, Mocha, or PyTest)\n2. Create a structured test directory that separates unit, integration, scenario, performance, and regression tests\n3. Implement common test utilities for setup/teardown, mocking, and assertions\n4. Create test configuration files for different test environments\n5. Set up CI/CD integration for automated test runs\n6. Document the test structure and conventions for the team\n7. Test the framework setup by writing a simple smoke test\n\n<info added on 2025-05-29T17:56:50.401Z>\nBased on your current implementation with Vitest and existing directory structure, here's additional information to enhance your test framework:\n\n```\n## Enhancing Existing Test Framework\n\n### Test Utilities Improvements\n1. Create a `utils/` directory with specialized helpers:\n   - `mockServices.ts` - Factory functions for consistent service mocking\n   - `testDataGenerators.ts` - Functions to generate test data with proper typing\n   - `assertionHelpers.ts` - Custom matchers for common application-specific assertions\n\n### Environment Configuration\n1. Implement `vitest.config.{env}.ts` files for different environments:\n   - Configure timeouts appropriate for each test type (shorter for unit, longer for integration)\n   - Set up environment-specific mocking strategies\n   - Add conditional coverage thresholds based on test type\n\n### Documentation Enhancements\n1. Create a `TESTING.md` file documenting:\n   - When to use each test directory (unit/, integration/, etc.)\n   - Mocking conventions and best practices\n   - Guidelines for test naming and organization\n   - Instructions for running specific test suites\n\n### CI/CD Integration\n1. Configure test matrix in CI to run different test types with appropriate settings:\n   - Unit tests on every PR\n   - Integration tests on merge to development\n   - Full test suite including performance tests on release branches\n\n### Performance Testing Setup\n1. Add performance testing utilities:\n   - Setup benchmark baselines\n   - Implement performance regression detection\n   - Configure Vitest for proper performance measurement\n```\n</info added on 2025-05-29T17:56:50.401Z>\n\n<info added on 2025-05-29T18:06:47.171Z>\n```\n## Deterministic Testing Enhancements\n\n### Determinism Test Improvements\n1. Add `tests/determinism/floating-point-precision.ts`:\n   - Implements IEEE 754 compliance verification\n   - Contains utilities to detect platform-specific floating point variations\n   - Provides normalization functions to ensure cross-platform consistency\n\n2. Create `tests/determinism/seed-management.ts`:\n   - Functions to record and replay random seeds\n   - Serialization/deserialization of simulation state for comparison\n   - Hash verification of simulation states across runs\n\n### Performance Testing Framework\n1. Implement `tests/performance/benchmarks/`:\n   - `neural-network-throughput.bench.ts`: Measures neural network processing speed\n   - `world-update-performance.bench.ts`: Benchmarks world tick performance with varying entity counts\n   - `memory-consumption.bench.ts`: Tracks memory usage patterns during long simulations\n\n2. Add `tests/performance/regression-detection.ts`:\n   - Statistical analysis tools to detect performance regressions\n   - Baseline comparison utilities with configurable thresholds\n   - Performance trend visualization helpers\n\n### Edge Case Testing\n1. Create `tests/edge-cases/`:\n   - `extreme-population.test.ts`: Tests with unusually large or small populations\n   - `resource-scarcity.test.ts`: Simulations with limited resources\n   - `neural-network-complexity.test.ts`: Tests with extremely complex neural architectures\n\n### Test Data Management\n1. Implement `tests/utils/simulation-snapshots.ts`:\n   - Functions to capture and restore complete simulation states\n   - Versioned test data storage for regression testing\n   - Diff utilities to analyze behavioral changes between versions\n```\n</info added on 2025-05-29T18:06:47.171Z>",
+          "status": "done",
+          "parentTaskId": 23
+        },
+        {
+          "id": 2,
+          "title": "Implement Core Component Unit Tests",
+          "description": "Create comprehensive unit tests for all core simulation components",
+          "dependencies": [
+            1
+          ],
+          "details": "1. Identify all core components requiring unit tests\n2. For each component, create test files with test cases covering:\n   - Normal operation paths\n   - Error handling and edge cases\n   - Boundary conditions\n   - Input validation\n3. Use mocking to isolate components from their dependencies\n4. Ensure at least 80% code coverage for core components\n5. Document any assumptions made during testing\n6. Verify tests pass consistently and don't have hidden dependencies",
+          "status": "pending",
+          "parentTaskId": 23
+        },
+        {
+          "id": 3,
+          "title": "Develop Integration Tests for System Interactions",
+          "description": "Create tests that verify correct interactions between connected components",
+          "dependencies": [
+            1,
+            2
+          ],
+          "details": "1. Identify key integration points between system components\n2. Create integration test scenarios that verify:\n   - Component communication\n   - Data flow between components\n   - API contracts are maintained\n   - System state transitions\n3. Minimize mocking to test actual interactions\n4. Set up test fixtures for common integration scenarios\n5. Document integration test coverage and gaps\n6. Test both successful flows and failure recovery scenarios",
+          "status": "pending",
+          "parentTaskId": 23
+        },
+        {
+          "id": 4,
+          "title": "Create Scenario-Based Tests with Expected Outcomes",
+          "description": "Implement end-to-end tests for key simulation scenarios with validation of expected results",
+          "dependencies": [
+            1,
+            3
+          ],
+          "details": "1. Identify 10-15 key simulation scenarios that represent typical use cases\n2. For each scenario:\n   - Define initial conditions\n   - Specify simulation parameters\n   - Document expected outcomes in detail\n3. Implement automated tests that run these scenarios\n4. Create validation logic to verify simulation results match expected outcomes\n5. Include both simple and complex scenarios\n6. Add timing assertions where appropriate\n7. Document each scenario's purpose and validation criteria",
+          "status": "pending",
+          "parentTaskId": 23
+        },
+        {
+          "id": 5,
+          "title": "Implement Determinism Tests for Reproducibility",
+          "description": "Create tests that verify simulation results are reproducible given the same inputs",
+          "dependencies": [
+            1,
+            4
+          ],
+          "details": "1. Create test fixtures with predefined random seeds\n2. Implement tests that run the same simulation multiple times\n3. Verify that results are identical across runs with the same seed\n4. Test determinism across different:\n   - System configurations\n   - Thread counts\n   - Execution environments\n5. Create detailed logging for any determinism failures\n6. Implement comparison utilities for complex simulation state\n7. Document determinism guarantees and limitations",
+          "status": "pending",
+          "parentTaskId": 23
+        },
+        {
+          "id": 6,
+          "title": "Develop Performance and Scalability Tests",
+          "description": "Create tests that measure and validate system performance under various loads",
+          "dependencies": [
+            1,
+            4
+          ],
+          "details": "1. Define key performance metrics (e.g., throughput, latency, memory usage)\n2. Create baseline performance tests for standard scenarios\n3. Implement scalability tests with increasing:\n   - Simulation size/complexity\n   - Data volume\n   - Concurrent operations\n4. Set up performance benchmarks and thresholds\n5. Create visualizations for performance test results\n6. Implement resource monitoring during tests\n7. Document performance expectations and test methodology\n8. Create regression detection for performance changes",
+          "status": "pending",
+          "parentTaskId": 23
+        },
+        {
+          "id": 7,
+          "title": "Implement Save/Load Validation Tests",
+          "description": "Create tests that verify simulation state can be correctly saved and restored",
+          "dependencies": [
+            1,
+            5
+          ],
+          "details": "1. Create test fixtures with various simulation states\n2. Implement tests that:\n   - Save simulation state to disk/database\n   - Load the state back\n   - Verify state integrity and completeness\n3. Test save/load across different:\n   - File formats\n   - Compression options\n   - Simulation complexities\n4. Include corruption detection and recovery tests\n5. Test backward compatibility with older save formats\n6. Verify performance of save/load operations\n7. Document save/load validation approach",
+          "status": "pending",
+          "parentTaskId": 23
+        },
+        {
+          "id": 8,
+          "title": "Create Regression Test Suite for Critical Functionality",
+          "description": "Implement a comprehensive regression test suite that protects against regressions in critical functionality",
+          "dependencies": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "details": "1. Identify critical functionality that must be protected against regressions\n2. Create a curated set of tests covering all critical paths\n3. Implement automated regression test runs for:\n   - Pre-commit validation\n   - Continuous integration\n   - Release certification\n4. Set up notifications for regression test failures\n5. Create a regression test dashboard\n6. Document regression test coverage and gaps\n7. Implement historical test result tracking\n8. Create a process for adding new regression tests when bugs are fixed",
+          "status": "pending",
+          "parentTaskId": 23
+        }
+      ]
     },
     {
       "id": 24,
