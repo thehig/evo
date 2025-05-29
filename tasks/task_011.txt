@@ -1,6 +1,6 @@
 # Task ID: 11
 # Title: Implement Creature Interaction System
-# Status: in-progress
+# Status: done
 # Dependencies: 5, 10
 # Priority: medium
 # Description: Create the system for creature-creature and creature-environment interactions.

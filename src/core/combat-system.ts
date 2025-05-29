@@ -260,10 +260,10 @@ export class CombatResolver {
       attackerAttrs.attackPower * (1 + attackerAttrs.experience);
     let defensePower = defenderAttrs.defense * (1 + defenderAttrs.experience);
 
-    // Apply action modifiers
+    // Apply action modifiers with more significant differences
     switch (attackerAction) {
       case CombatAction.AGGRESSIVE_ATTACK:
-        attackPower *= 1.5;
+        attackPower *= 1.8; // Increased from 1.5 for more significant difference
         break;
       case CombatAction.DEFENSIVE_ATTACK:
         attackPower *= 1.0;
@@ -289,28 +289,28 @@ export class CombatResolver {
     attackPower *= 1 - attackerAttrs.fatigue;
     defensePower *= 1 - defenderAttrs.fatigue;
 
-    // Calculate base damage
+    // Calculate base damage with better scaling
+    const attackDefenseRatio = attackPower / Math.max(0.1, defensePower); // Prevent division by zero
     const baseDamage = Math.max(
-      1, // Minimum 1 damage to ensure attacks always do some damage
-      (attackPower / Math.max(1, defensePower)) *
-        this.config.baseDamageMultiplier
+      0, // Allow zero damage when well defended
+      attackDefenseRatio * this.config.baseDamageMultiplier
     );
 
     // Apply randomization
     const randomFactor =
       1 + (Math.random() - 0.5) * 2 * this.config.randomizationFactor;
-    const damage = Math.floor(baseDamage * randomFactor);
+    const damage = Math.max(0, Math.floor(baseDamage * randomFactor));
 
     // Calculate counter damage if defender is counter-attacking
     let counterDamage = 0;
     if (defenderAction === CombatAction.COUNTER_ATTACK) {
-      const counterPower = defenderAttrs.attackPower * 0.8; // Increased from 0.7 for more significant counter damage
+      const counterPower = defenderAttrs.attackPower * 0.8;
       const counterBase = Math.max(
-        1, // Minimum 1 damage to ensure counter attacks always do some damage
-        (counterPower / Math.max(1, attackerAttrs.defense)) *
+        0, // Allow zero counter damage
+        (counterPower / Math.max(0.1, attackerAttrs.defense)) *
           this.config.baseDamageMultiplier
       );
-      counterDamage = Math.floor(counterBase * randomFactor);
+      counterDamage = Math.max(0, Math.floor(counterBase * randomFactor));
     }
 
     return { damage, counterDamage };

@@ -177,6 +177,12 @@ describe("CombatResolver", () => {
     });
 
     it("should apply action modifiers correctly", () => {
+      // Create a deterministic combat resolver without randomization
+      const deterministicResolver = new CombatResolver({
+        randomizationFactor: 0.0, // Remove randomization for deterministic testing
+        baseDamageMultiplier: 10,
+      });
+
       // Use creatures with higher energy to ensure more significant damage differences
       const strongAttacker = new MockCreature(
         "strong",
@@ -186,14 +192,14 @@ describe("CombatResolver", () => {
       );
       const defender = new MockCreature("defender", { x: 0, y: 0 }, 100, 100);
 
-      const aggressiveDamage = combatResolver.calculateDamage(
+      const aggressiveDamage = deterministicResolver.calculateDamage(
         strongAttacker,
         defender,
         CombatAction.AGGRESSIVE_ATTACK,
         CombatAction.DEFEND
       );
 
-      const defensiveDamage = combatResolver.calculateDamage(
+      const defensiveDamage = deterministicResolver.calculateDamage(
         strongAttacker,
         defender,
         CombatAction.DEFENSIVE_ATTACK,
