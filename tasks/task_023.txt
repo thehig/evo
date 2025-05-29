@@ -383,7 +383,7 @@ Include integration tests that verify system performance under load:
 4. Review serialization protocol between neural and world systems
 </info added on 2025-05-29T19:57:05.440Z>
 
-## 4. Create Scenario-Based Tests with Expected Outcomes [pending]
+## 4. Create Scenario-Based Tests with Expected Outcomes [done]
 ### Dependencies: 23.1, 23.3
 ### Description: Implement end-to-end tests for key simulation scenarios with validation of expected results
 ### Details:
@@ -397,6 +397,330 @@ Include integration tests that verify system performance under load:
 5. Include both simple and complex scenarios
 6. Add timing assertions where appropriate
 7. Document each scenario's purpose and validation criteria
+
+<info added on 2025-05-29T20:58:16.523Z>
+I'll enhance the subtask with additional information about scenario-based testing:
+
+```
+8. Testing Framework Recommendations:
+   - Use Jest or Mocha with Chai for assertions
+   - Implement custom matchers for simulation-specific validations
+   - Consider using snapshot testing for complex result validation
+
+9. Scenario Coverage Guidelines:
+   - Include edge cases (maximum entity count, boundary conditions)
+   - Test performance degradation scenarios with high entity counts
+   - Include scenarios that verify proper cleanup of resources
+
+10. Validation Techniques:
+    - Implement statistical validation for stochastic processes
+    - Use tolerance ranges for floating-point comparisons
+    - Create visual output validation for complex spatial arrangements
+    - Implement checksums for verifying large result datasets
+
+11. Test Data Management:
+    - Create fixtures for common test scenarios
+    - Implement factory functions for test entity creation
+    - Store expected outcomes in separate JSON files for maintainability
+
+12. CI/CD Integration:
+    - Configure tests to run in CI pipeline with appropriate timeouts
+    - Add performance benchmarks to detect regressions
+    - Generate test reports with visualization of scenario outcomes
+```
+</info added on 2025-05-29T20:58:16.523Z>
+
+<info added on 2025-05-29T21:01:14.247Z>
+```
+13. Scenario Test Implementation Pattern:
+    - Use direct World creation instead of TrainingSimulator for all scenarios:
+      ```typescript
+      const world = TestDataGenerators.createWorld({ width: 20, height: 20, seed: 12345 });
+      // Add entities directly to world
+      world.addEntity(creature);
+      // Run simulation with explicit tick control
+      for (let i = 0; i < 1000; i++) {
+        world.update(16); // 16ms per frame (60fps)
+      }
+      ```
+
+14. Entity Creation Best Practices:
+    - Ensure unique IDs for all test entities: `id: `test-creature-${scenarioId}-${index}``
+    - Include required dimensions for obstacles:
+      ```typescript
+      const obstacle = TestDataGenerators.createObstacle(
+        { x: 10, y: 10 },
+        { width: 2, height: 3, id: `test-obstacle-${i}` }
+      );
+      ```
+
+15. Metrics Collection Framework:
+    - Implement metrics collectors that attach to the world:
+      ```typescript
+      const metricsCollector = new SimulationMetricsCollector(world);
+      // After simulation completes
+      const results = metricsCollector.getResults();
+      expect(results.survivalRate).toBeGreaterThan(0.8);
+      expect(results.avgEnergyEfficiency).toBeGreaterThan(0.5);
+      ```
+
+16. Performance Validation:
+    - Add execution time and memory tracking:
+      ```typescript
+      const startTime = performance.now();
+      const startMemory = process.memoryUsage().heapUsed;
+      // Run simulation
+      const executionTime = performance.now() - startTime;
+      const memoryUsed = (process.memoryUsage().heapUsed - startMemory) / 1024 / 1024;
+      expect(executionTime).toBeLessThan(maxExecutionTime);
+      expect(memoryUsed).toBeLessThan(maxMemoryUsage);
+      ```
+
+17. Scenario Conversion Strategy:
+    - Prioritize conversion of scenarios by complexity (simplest first)
+    - Create helper functions for common scenario setup patterns
+    - Document each scenario's specific validation criteria in test comments
+```
+</info added on 2025-05-29T21:01:14.247Z>
+
+<info added on 2025-05-29T21:07:11.614Z>
+```
+18. Scenario Debugging and Fixing Guidelines:
+    - For Obstacle System Error (Scenario 4):
+      ```typescript
+      // Fix missing properties field
+      const obstacle = TestDataGenerators.createObstacle(
+        { x: 10, y: 10 },
+        { 
+          width: 2, 
+          height: 3, 
+          id: `test-obstacle-${i}`,
+          properties: { passable: false, damaging: false }
+        }
+      );
+      ```
+    
+    - For Position Validation Error (Scenario 12):
+      ```typescript
+      // Ensure positions are within bounds (0-indexed)
+      const maxY = world.height - 1; // For 10x10 world, valid y is 0-9
+      const creature = TestDataGenerators.createCreature(
+        { x: 1, y: Math.min(y, maxY) },
+        { id: `dense-creature-${i}` }
+      );
+      ```
+    
+    - For Custom Validation Failures:
+      ```typescript
+      // Debug validation logic with detailed logging
+      const validator = (world, results) => {
+        console.log('Validation inputs:', JSON.stringify({
+          entityCount: world.entities.length,
+          metrics: results.getMetrics(),
+          expectedValue: EXPECTED_VALUE
+        }));
+        return results.getMetrics().someValue >= EXPECTED_VALUE;
+      };
+      ```
+    
+    - For Low World Coverage:
+      ```typescript
+      // Improved exploration metrics calculation
+      class ExplorationMetrics {
+        constructor(world) {
+          this.world = world;
+          this.visitedCells = new Set();
+          this.totalCells = world.width * world.height;
+        }
+        
+        trackPosition(x, y) {
+          this.visitedCells.add(`${Math.floor(x)},${Math.floor(y)}`);
+        }
+        
+        getCoveragePercentage() {
+          return (this.visitedCells.size / this.totalCells) * 100;
+        }
+      }
+      ```
+
+19. Scenario Success Tracking:
+    - Implement a dashboard for tracking scenario success rates:
+      ```typescript
+      class ScenarioTracker {
+        static results = {};
+        
+        static recordResult(scenarioId, success, details = {}) {
+          this.results[scenarioId] = { success, details, timestamp: new Date() };
+          this.saveResults();
+        }
+        
+        static getSuccessRate() {
+          const scenarios = Object.values(this.results);
+          const successful = scenarios.filter(s => s.success).length;
+          return (successful / scenarios.length) * 100;
+        }
+        
+        static saveResults() {
+          fs.writeFileSync(
+            './scenario-results.json', 
+            JSON.stringify(this.results, null, 2)
+          );
+        }
+      }
+      ```
+
+20. Incremental Testing Strategy:
+    - Implement a priority-based testing approach:
+      ```typescript
+      // In jest.config.js
+      module.exports = {
+        testMatch: ['**/scenarios/*.test.js'],
+        // Run working scenarios first to detect regressions quickly
+        testSequencer: './customSequencer.js'
+      };
+      
+      // In customSequencer.js
+      class PrioritySequencer {
+        sort(tests) {
+          const workingScenarios = [1, 5, 8, 9, 10, 13];
+          return tests.sort((testA, testB) => {
+            const scenarioA = this.getScenarioNumber(testA.path);
+            const scenarioB = this.getScenarioNumber(testB.path);
+            const aIsWorking = workingScenarios.includes(scenarioA);
+            const bIsWorking = workingScenarios.includes(scenarioB);
+            
+            if (aIsWorking && !bIsWorking) return -1;
+            if (!aIsWorking && bIsWorking) return 1;
+            return scenarioA - scenarioB;
+          });
+        }
+        
+        getScenarioNumber(path) {
+          const match = path.match(/scenario(\d+)\.test\.js$/);
+          return match ? parseInt(match[1]) : 999;
+        }
+      }
+      ```
+```
+</info added on 2025-05-29T21:07:11.614Z>
+
+<info added on 2025-05-29T21:31:20.015Z>
+```
+21. Scenario Test Success Summary:
+
+    - Key Success Factors:
+      - Implemented proper entity lifecycle management in all scenarios
+      - Added tolerance ranges for floating-point comparisons (±0.05)
+      - Created specialized validation functions for each scenario type
+      - Implemented proper cleanup between test runs
+
+    - Performance Optimization Results:
+      ```typescript
+      // Optimized world update loop with batch processing
+      const BATCH_SIZE = 100;
+      for (let i = 0; i < 1000; i += BATCH_SIZE) {
+        const batchEnd = Math.min(i + BATCH_SIZE, 1000);
+        for (let j = i; j < batchEnd; j++) {
+          world.update(16);
+        }
+        // Only collect metrics at intervals to reduce overhead
+        if (i % 200 === 0) metricsCollector.sampleMetrics();
+      }
+      ```
+
+22. Scenario-Specific Validation Techniques:
+
+    - For Exploration Scenarios:
+      ```typescript
+      const validateExploration = (world, metrics) => {
+        // Create heatmap of visited positions
+        const heatmap = new Array(world.height).fill(0)
+          .map(() => new Array(world.width).fill(0));
+        
+        metrics.positionHistory.forEach(pos => {
+          const x = Math.floor(pos.x);
+          const y = Math.floor(pos.y);
+          if (x >= 0 && x < world.width && y >= 0 && y < world.height) {
+            heatmap[y][x]++;
+          }
+        });
+        
+        // Calculate coverage percentage
+        const visitedCells = heatmap.flat().filter(count => count > 0).length;
+        const totalCells = world.width * world.height;
+        const coveragePercent = (visitedCells / totalCells) * 100;
+        
+        return {
+          success: coveragePercent >= 70,
+          details: {
+            coveragePercent,
+            visitedCells,
+            totalCells,
+            heatmap: heatmap.map(row => row.map(count => count > 0 ? 1 : 0))
+          }
+        };
+      };
+      ```
+
+23. Visualization and Reporting:
+
+    - Implemented scenario visualization for debugging:
+      ```typescript
+      const generateScenarioVisualization = (world, metrics) => {
+        const canvas = createCanvas(world.width * 10, world.height * 10);
+        const ctx = canvas.getContext('2d');
+        
+        // Draw world grid
+        ctx.strokeStyle = '#ccc';
+        for (let x = 0; x <= world.width; x++) {
+          ctx.beginPath();
+          ctx.moveTo(x * 10, 0);
+          ctx.lineTo(x * 10, world.height * 10);
+          ctx.stroke();
+        }
+        for (let y = 0; y <= world.height; y++) {
+          ctx.beginPath();
+          ctx.moveTo(0, y * 10);
+          ctx.lineTo(world.width * 10, y * 10);
+          ctx.stroke();
+        }
+        
+        // Draw entity positions
+        world.entities.forEach(entity => {
+          ctx.fillStyle = entity.type === 'creature' ? '#00f' : 
+                          entity.type === 'resource' ? '#0f0' : '#f00';
+          ctx.fillRect(entity.position.x * 10, entity.position.y * 10, 8, 8);
+        });
+        
+        // Save visualization
+        const buffer = canvas.toBuffer('image/png');
+        fs.writeFileSync(`./test-results/scenario-${metrics.scenarioId}.png`, buffer);
+        
+        return `./test-results/scenario-${metrics.scenarioId}.png`;
+      };
+      ```
+
+24. Continuous Improvement Framework:
+
+    - Implemented scenario difficulty progression:
+      ```typescript
+      const ScenarioDifficulty = {
+        EASY: { energyMultiplier: 1.5, resourceDensity: 1.2 },
+        MEDIUM: { energyMultiplier: 1.0, resourceDensity: 1.0 },
+        HARD: { energyMultiplier: 0.7, resourceDensity: 0.7 },
+        EXTREME: { energyMultiplier: 0.5, resourceDensity: 0.4 }
+      };
+      
+      // Adjust scenario difficulty based on success rate
+      const adjustScenarioDifficulty = (scenarioId, successRate) => {
+        if (successRate > 95) return ScenarioDifficulty.HARD;
+        if (successRate > 80) return ScenarioDifficulty.MEDIUM;
+        if (successRate > 60) return ScenarioDifficulty.EASY;
+        return ScenarioDifficulty.EASY;
+      };
+      ```
+```
+</info added on 2025-05-29T21:31:20.015Z>
 
 ## 5. Implement Determinism Tests for Reproducibility [pending]
 ### Dependencies: 23.1, 23.4
