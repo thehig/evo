@@ -215,6 +215,10 @@ export class World implements IWorld {
     this.signalSystem.update(deltaTime);
     this.obstacleSystem.update(deltaTime);
 
+    // Synchronize obstacles with signal system for proper signal attenuation
+    const obstacles = this.obstacleSystem.getAllObstacles();
+    this.signalSystem.setObstacles([...obstacles]);
+
     // Update all entities
     for (const entity of this.entityMap.values()) {
       if (entity.active) {

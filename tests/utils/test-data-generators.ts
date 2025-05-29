@@ -118,8 +118,13 @@ export class TestDataGenerators {
 
     return {
       id: `test-creature-${finalConfig.seed}`,
+      initialEnergy: 100,
       maxEnergy: 100,
       maxAge: 1000,
+      worldDimensions: {
+        width: 20,
+        height: 20,
+      },
       vision: {
         range: 1,
         maxDistance: 2,
@@ -132,10 +137,20 @@ export class TestDataGenerators {
         signalHistorySize: 3,
       },
       energyCosts: {
-        movement: 2,
-        rest: -1,
-        metabolic: 0.1,
+        movement: 1,
+        diagonalMovement: 1.4,
+        rest: -2,
+        sleep: -3,
+        emitSignal: 0.5,
+        eat: -10,
+        drink: -5,
+        gather: 1,
+        attack: 3,
+        defend: 1,
+        metabolism: 0.05,
       },
+      signalRange: 5.0,
+      signalStrength: 1.0,
       traits: {
         speed: 1.0,
         efficiency: 1.0,

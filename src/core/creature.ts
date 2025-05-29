@@ -103,6 +103,14 @@ export class Creature implements ICreature {
   }
 
   set energy(value: number) {
+    // Ensure value is a valid number
+    if (isNaN(value) || !isFinite(value)) {
+      console.warn(
+        `Invalid energy value ${value} for creature ${this._id}, setting to 0`
+      );
+      value = 0;
+    }
+
     this._energy = Math.max(0, Math.min(this._config.maxEnergy, value));
 
     // Update energy history
@@ -114,7 +122,8 @@ export class Creature implements ICreature {
     }
 
     // Update hunger based on energy level
-    this._state.hunger = Math.max(0, 1 - this._energy);
+    const energyRatio = this._energy / this._config.maxEnergy;
+    this._state.hunger = Math.max(0, Math.min(1, 1 - energyRatio));
 
     // Check if creature dies from energy depletion
     if (this._energy <= 0) {
@@ -153,7 +162,8 @@ export class Creature implements ICreature {
     }
 
     // Update hunger based on energy level
-    this._state.hunger = Math.max(0, 1.0 - this._energy);
+    const energyRatio = this._energy / this._config.maxEnergy;
+    this._state.hunger = Math.max(0, Math.min(1, 1 - energyRatio));
 
     // Update action timing
     this._state.ticksSinceLastAction += 1;

@@ -407,23 +407,88 @@ export class SignalSystem {
     end: { x: number; y: number },
     obstacle: IObstacle
   ): boolean {
-    // Simple AABB line intersection test
+    // Improved line-rectangle intersection test using line segment intersection
     const obstacleLeft = obstacle.position.x;
     const obstacleRight = obstacle.position.x + obstacle.dimensions.width;
     const obstacleTop = obstacle.position.y;
     const obstacleBottom = obstacle.position.y + obstacle.dimensions.height;
 
-    // Check if line passes through obstacle bounds
-    const minX = Math.min(start.x, end.x);
-    const maxX = Math.max(start.x, end.x);
-    const minY = Math.min(start.y, end.y);
-    const maxY = Math.max(start.y, end.y);
+    // Check if either point is inside the obstacle
+    if (
+      (start.x >= obstacleLeft &&
+        start.x <= obstacleRight &&
+        start.y >= obstacleTop &&
+        start.y <= obstacleBottom) ||
+      (end.x >= obstacleLeft &&
+        end.x <= obstacleRight &&
+        end.y >= obstacleTop &&
+        end.y <= obstacleBottom)
+    ) {
+      return true;
+    }
 
-    return !(
-      maxX < obstacleLeft ||
-      minX > obstacleRight ||
-      maxY < obstacleTop ||
-      minY > obstacleBottom
+    // Check if line segment intersects any of the four rectangle edges
+    const lineSegmentIntersectsEdge = (
+      x1: number,
+      y1: number,
+      x2: number,
+      y2: number,
+      x3: number,
+      y3: number,
+      x4: number,
+      y4: number
+    ): boolean => {
+      const denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+      if (Math.abs(denominator) < 1e-10) return false; // Lines are parallel
+
+      const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denominator;
+      const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denominator;
+
+      return t >= 0 && t <= 1 && u >= 0 && u <= 1;
+    };
+
+    // Check intersection with all four edges of the rectangle
+    return (
+      lineSegmentIntersectsEdge(
+        start.x,
+        start.y,
+        end.x,
+        end.y,
+        obstacleLeft,
+        obstacleTop,
+        obstacleRight,
+        obstacleTop
+      ) || // Top edge
+      lineSegmentIntersectsEdge(
+        start.x,
+        start.y,
+        end.x,
+        end.y,
+        obstacleRight,
+        obstacleTop,
+        obstacleRight,
+        obstacleBottom
+      ) || // Right edge
+      lineSegmentIntersectsEdge(
+        start.x,
+        start.y,
+        end.x,
+        end.y,
+        obstacleRight,
+        obstacleBottom,
+        obstacleLeft,
+        obstacleBottom
+      ) || // Bottom edge
+      lineSegmentIntersectsEdge(
+        start.x,
+        start.y,
+        end.x,
+        end.y,
+        obstacleLeft,
+        obstacleBottom,
+        obstacleLeft,
+        obstacleTop
+      ) // Left edge
     );
   }
 
