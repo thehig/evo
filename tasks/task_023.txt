@@ -885,7 +885,7 @@ describe('Neural Network Scaling Tests', () => {
 - Comprehensive metrics collection including custom performance indicators
 </info added on 2025-05-29T22:04:02.574Z>
 
-## 7. Implement Save/Load Validation Tests [in-progress]
+## 7. Implement Save/Load Validation Tests [done]
 ### Dependencies: 23.1, 23.5
 ### Description: Create tests that verify simulation state can be correctly saved and restored
 ### Details:
@@ -903,7 +903,7 @@ describe('Neural Network Scaling Tests', () => {
 6. Verify performance of save/load operations
 7. Document save/load validation approach
 
-## 8. Create Regression Test Suite for Critical Functionality [pending]
+## 8. Create Regression Test Suite for Critical Functionality [done]
 ### Dependencies: 23.1, 23.2, 23.3, 23.4, 23.5, 23.6, 23.7
 ### Description: Implement a comprehensive regression test suite that protects against regressions in critical functionality
 ### Details:
