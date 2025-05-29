@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Neural Evolution Simulator - Live Demo</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        min-height: 100vh;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .header h1 {
+        font-size: 2.5em;
+        margin: 0;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      }
+
+      .header p {
+        font-size: 1.2em;
+        opacity: 0.9;
+        margin-top: 10px;
+      }
+
+      .container {
+        display: flex;
+        gap: 20px;
+        max-width: 1400px;
+        margin: 0 auto;
+        flex-wrap: wrap;
+      }
+
+      .simulation-area {
+        flex: 1;
+        min-width: 800px;
+      }
+
+      .controls-panel {
+        width: 350px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 20px;
+        height: fit-content;
+      }
+
+      .simulation-canvas {
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      }
+
+      .control-group {
+        margin-bottom: 20px;
+      }
+
+      .control-group h3 {
+        margin: 0 0 10px 0;
+        color: #fff;
+        font-size: 1.1em;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+
+      .stat-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 10px;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .stat-value {
+        font-size: 1.4em;
+        font-weight: bold;
+        color: #4caf50;
+      }
+
+      .stat-label {
+        font-size: 0.8em;
+        opacity: 0.8;
+        margin-top: 2px;
+      }
+
+      .button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        padding: 12px 24px;
+        font-size: 1em;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin: 5px;
+        width: 100%;
+      }
+
+      .button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      }
+
+      .button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .scenario-select {
+        width: 100%;
+        padding: 10px;
+        border: none;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.9);
+        color: #333;
+        font-size: 1em;
+        margin-bottom: 10px;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+        overflow: hidden;
+        margin: 10px 0;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4caf50, #8bc34a);
+        width: 0%;
+        transition: width 0.3s ease;
+      }
+
+      .generation-log {
+        max-height: 200px;
+        overflow-y: auto;
+        background: rgba(0, 0, 0, 0.3);
+        padding: 10px;
+        border-radius: 8px;
+        font-family: monospace;
+        font-size: 0.9em;
+      }
+
+      .log-entry {
+        margin-bottom: 5px;
+        padding: 2px 0;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 40px;
+        font-size: 1.2em;
+      }
+
+      .error {
+        background: rgba(244, 67, 54, 0.1);
+        border: 1px solid rgba(244, 67, 54, 0.3);
+        color: #f44336;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 10px 0;
+      }
+
+      .info-panel {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+
+      .creature-info {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .creature-stat {
+        text-align: center;
+        padding: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>🧬 Neural Evolution Simulator</h1>
+      <p>
+        Watch creatures evolve and learn in real-time using neural networks and
+        genetic algorithms
+      </p>
+    </div>
+
+    <div class="container">
+      <div class="simulation-area">
+        <div id="webgl-renderer" class="simulation-canvas"></div>
+      </div>
+
+      <div class="controls-panel">
+        <div class="control-group">
+          <h3>🎯 Simulation Control</h3>
+          <select id="scenario-select" class="scenario-select">
+            <option value="SURVIVAL">🛡️ Survival Training</option>
+            <option value="EXPLORATION">🗺️ World Exploration</option>
+            <option value="ENERGY_EFFICIENCY">⚡ Energy Efficiency</option>
+            <option value="MOVEMENT_OPTIMIZATION">
+              🏃 Movement Optimization
+            </option>
+          </select>
+          <button id="start-btn" class="button">🚀 Start Evolution</button>
+          <button id="pause-btn" class="button" disabled>⏸️ Pause</button>
+          <button id="reset-btn" class="button">🔄 Reset</button>
+        </div>
+
+        <div class="control-group">
+          <h3>📊 Current Statistics</h3>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-value" id="generation-count">0</div>
+              <div class="stat-label">Generation</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="best-fitness">0.000</div>
+              <div class="stat-label">Best Fitness</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="alive-creatures">0</div>
+              <div class="stat-label">Alive</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="avg-fitness">0.000</div>
+              <div class="stat-label">Avg Fitness</div>
+            </div>
+          </div>
+
+          <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+          <div style="text-align: center; font-size: 0.9em; margin-top: 5px">
+            Generation Progress: <span id="progress-text">0/0</span>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <h3>🏆 Best Creature</h3>
+          <div class="creature-info">
+            <div class="creature-stat">
+              <div id="creature-energy">100</div>
+              <div style="font-size: 0.8em">Energy</div>
+            </div>
+            <div class="creature-stat">
+              <div id="creature-age">0</div>
+              <div style="font-size: 0.8em">Age</div>
+            </div>
+            <div class="creature-stat">
+              <div id="creature-x">0</div>
+              <div style="font-size: 0.8em">X Position</div>
+            </div>
+            <div class="creature-stat">
+              <div id="creature-y">0</div>
+              <div style="font-size: 0.8em">Y Position</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <h3>📝 Evolution Log</h3>
+          <div class="generation-log" id="evolution-log">
+            <div class="log-entry">
+              🎯 Select a scenario and click "Start Evolution" to begin
+            </div>
+            <div class="log-entry">
+              🔍 Watch as creatures learn to survive and adapt
+            </div>
+            <div class="log-entry">
+              🧬 Each generation improves based on fitness
+            </div>
+          </div>
+        </div>
+
+        <div class="info-panel">
+          <h3>ℹ️ Controls</h3>
+          <div style="font-size: 0.9em; line-height: 1.6">
+            <strong>Mouse:</strong> Drag to pan, scroll to zoom<br />
+            <strong>Keyboard:</strong> WASD keys to move camera<br />
+            <strong>Visual:</strong> Pink dots are creatures, green areas are
+            resources
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scripts will be added here -->
+    <script type="module">
+      // This will be filled with the simulation logic
+      console.log("Neural Evolution Simulator Web Demo Ready");
+
+      // For now, show a loading message
+      document.getElementById("webgl-renderer").innerHTML = `
+            <div class="loading">
+                <div>🔧 Setting up simulation engine...</div>
+                <div style="margin-top: 10px; font-size: 0.9em; opacity: 0.7;">
+                    Loading neural networks, genetic algorithms, and world systems
+                </div>
+            </div>
+        `;
+
+      // Add some demo functionality
+      let currentGeneration = 0;
+      let running = false;
+
+      function addLogEntry(message) {
+        const log = document.getElementById("evolution-log");
+        const entry = document.createElement("div");
+        entry.className = "log-entry";
+        entry.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+        log.appendChild(entry);
+        log.scrollTop = log.scrollHeight;
+      }
+
+      function updateStats(
+        generation,
+        bestFitness,
+        avgFitness,
+        aliveCreatures,
+        totalCreatures
+      ) {
+        document.getElementById("generation-count").textContent = generation;
+        document.getElementById("best-fitness").textContent =
+          bestFitness.toFixed(3);
+        document.getElementById("avg-fitness").textContent =
+          avgFitness.toFixed(3);
+        document.getElementById(
+          "alive-creatures"
+        ).textContent = `${aliveCreatures}/${totalCreatures}`;
+
+        const progress = (generation / 10) * 100; // Assuming 10 generations max for demo
+        document.getElementById("progress-fill").style.width = `${Math.min(
+          progress,
+          100
+        )}%`;
+        document.getElementById(
+          "progress-text"
+        ).textContent = `${generation}/10`;
+      }
+
+      document.getElementById("start-btn").addEventListener("click", () => {
+        const scenario = document.getElementById("scenario-select").value;
+        addLogEntry(`Starting ${scenario} scenario...`);
+        addLogEntry("Initializing population of 20 creatures");
+        running = true;
+
+        document.getElementById("start-btn").disabled = true;
+        document.getElementById("pause-btn").disabled = false;
+
+        // Simulate evolution progress
+        let generation = 0;
+        const interval = setInterval(() => {
+          generation++;
+          const bestFitness = Math.random() * 50 + generation * 5;
+          const avgFitness = bestFitness * 0.7;
+          const aliveCreatures = Math.floor(Math.random() * 5) + 15;
+
+          updateStats(generation, bestFitness, avgFitness, aliveCreatures, 20);
+          addLogEntry(
+            `Generation ${generation}: Best ${bestFitness.toFixed(
+              2
+            )}, Avg ${avgFitness.toFixed(2)}`
+          );
+
+          if (generation >= 10 || !running) {
+            clearInterval(interval);
+            addLogEntry(
+              "Evolution complete! Best creatures have learned to survive."
+            );
+            document.getElementById("start-btn").disabled = false;
+            document.getElementById("pause-btn").disabled = true;
+          }
+        }, 2000);
+      });
+
+      document.getElementById("pause-btn").addEventListener("click", () => {
+        running = false;
+        addLogEntry("Evolution paused");
+        document.getElementById("start-btn").disabled = false;
+        document.getElementById("pause-btn").disabled = true;
+      });
+
+      document.getElementById("reset-btn").addEventListener("click", () => {
+        running = false;
+        updateStats(0, 0, 0, 0, 20);
+        document.getElementById("evolution-log").innerHTML = `
+                <div class="log-entry">🎯 Select a scenario and click "Start Evolution" to begin</div>
+                <div class="log-entry">🔍 Watch as creatures learn to survive and adapt</div>
+                <div class="log-entry">🧬 Each generation improves based on fitness</div>
+            `;
+        document.getElementById("start-btn").disabled = false;
+        document.getElementById("pause-btn").disabled = true;
+        addLogEntry("Simulation reset");
+      });
+    </script>
+  </body>
+</html>

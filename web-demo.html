@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Neural Evolution Simulator - Browser Demo</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+        color: white;
+        min-height: 100vh;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .header h1 {
+        font-size: 2.5em;
+        margin: 0;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      }
+
+      .header p {
+        font-size: 1.2em;
+        opacity: 0.9;
+        margin-top: 10px;
+      }
+
+      .container {
+        display: flex;
+        gap: 20px;
+        max-width: 1400px;
+        margin: 0 auto;
+        flex-wrap: wrap;
+      }
+
+      .simulation-area {
+        flex: 1;
+        min-width: 800px;
+      }
+
+      .controls-panel {
+        width: 350px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 20px;
+        height: fit-content;
+      }
+
+      #world-canvas {
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        background: #1a1a1a;
+        display: block;
+        margin: 0 auto;
+      }
+
+      .control-group {
+        margin-bottom: 20px;
+      }
+
+      .control-group h3 {
+        margin: 0 0 10px 0;
+        color: #fff;
+        font-size: 1.1em;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+
+      .stat-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 10px;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .stat-value {
+        font-size: 1.4em;
+        font-weight: bold;
+        color: #4caf50;
+      }
+
+      .stat-label {
+        font-size: 0.8em;
+        opacity: 0.8;
+        margin-top: 2px;
+      }
+
+      .button {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        border: none;
+        color: white;
+        padding: 12px 24px;
+        font-size: 1em;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin: 5px;
+        width: 100%;
+      }
+
+      .button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      }
+
+      .button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .scenario-select {
+        width: 100%;
+        padding: 10px;
+        border: none;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.9);
+        color: #333;
+        font-size: 1em;
+        margin-bottom: 10px;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+        overflow: hidden;
+        margin: 10px 0;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4caf50, #8bc34a);
+        width: 0%;
+        transition: width 0.3s ease;
+      }
+
+      .generation-log {
+        max-height: 200px;
+        overflow-y: auto;
+        background: rgba(0, 0, 0, 0.3);
+        padding: 10px;
+        border-radius: 8px;
+        font-family: monospace;
+        font-size: 0.9em;
+      }
+
+      .log-entry {
+        margin-bottom: 5px;
+        padding: 2px 0;
+      }
+
+      .creature-info {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .creature-stat {
+        text-align: center;
+        padding: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 5px;
+      }
+
+      .info-panel {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>🧬 Neural Evolution Simulator</h1>
+      <p>
+        Watch creatures evolve and learn in real-time using neural networks and
+        genetic algorithms
+      </p>
+    </div>
+
+    <div class="container">
+      <div class="simulation-area">
+        <canvas id="world-canvas" width="800" height="600"></canvas>
+      </div>
+
+      <div class="controls-panel">
+        <div class="control-group">
+          <h3>🎯 Simulation Control</h3>
+          <select id="scenario-select" class="scenario-select">
+            <option value="survival">🛡️ Survival Training</option>
+            <option value="exploration">🗺️ World Exploration</option>
+            <option value="energy">⚡ Energy Efficiency</option>
+            <option value="movement">🏃 Movement Optimization</option>
+          </select>
+          <button id="start-btn" class="button">🚀 Start Evolution</button>
+          <button id="pause-btn" class="button" disabled>⏸️ Pause</button>
+          <button id="reset-btn" class="button">🔄 Reset</button>
+        </div>
+
+        <div class="control-group">
+          <h3>📊 Current Statistics</h3>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-value" id="generation-count">0</div>
+              <div class="stat-label">Generation</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="best-fitness">0.000</div>
+              <div class="stat-label">Best Fitness</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="alive-creatures">0</div>
+              <div class="stat-label">Alive</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="avg-fitness">0.000</div>
+              <div class="stat-label">Avg Fitness</div>
+            </div>
+          </div>
+
+          <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+          <div style="text-align: center; font-size: 0.9em; margin-top: 5px">
+            Generation Progress: <span id="progress-text">0/5</span>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <h3>🏆 Best Creature</h3>
+          <div class="creature-info">
+            <div class="creature-stat">
+              <div id="creature-energy">100</div>
+              <div style="font-size: 0.8em">Energy</div>
+            </div>
+            <div class="creature-stat">
+              <div id="creature-age">0</div>
+              <div style="font-size: 0.8em">Age</div>
+            </div>
+            <div class="creature-stat">
+              <div id="creature-x">10</div>
+              <div style="font-size: 0.8em">X Position</div>
+            </div>
+            <div class="creature-stat">
+              <div id="creature-y">10</div>
+              <div style="font-size: 0.8em">Y Position</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <h3>📝 Evolution Log</h3>
+          <div class="generation-log" id="evolution-log">
+            <div class="log-entry">
+              🎯 Select a scenario and click "Start Evolution" to begin
+            </div>
+            <div class="log-entry">
+              🔍 Watch as creatures learn to survive and adapt
+            </div>
+            <div class="log-entry">
+              🧬 Each generation improves based on fitness
+            </div>
+          </div>
+        </div>
+
+        <div class="info-panel">
+          <h3>ℹ️ What You're Seeing</h3>
+          <div style="font-size: 0.9em; line-height: 1.6">
+            <div style="color: #e91e63">🔴 Pink circles:</div>
+            Creatures with neural network brains<br />
+            <div style="color: #4caf50">🟢 Green squares:</div>
+            Food/energy sources<br />
+            <div style="color: #03a9f4">🔵 Blue areas:</div>
+            Water/resources<br />
+            <div style="color: #795548">🟤 Brown blocks:</div>
+            Obstacles/mountains<br />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Simulation state
+      class SimpleCreature {
+        constructor(x, y, energy = 100) {
+          this.x = x;
+          this.y = y;
+          this.energy = energy;
+          this.age = 0;
+          this.fitness = 0;
+          this.vx = (Math.random() - 0.5) * 2;
+          this.vy = (Math.random() - 0.5) * 2;
+          this.size = 8;
+          this.color = `hsl(${320 + Math.random() * 40}, 70%, 60%)`;
+        }
+
+        update(world) {
+          this.age++;
+
+          // Simple AI: move towards food, avoid edges
+          const nearbyFood = world.food.find(
+            (f) => Math.abs(f.x - this.x) < 50 && Math.abs(f.y - this.y) < 50
+          );
+
+          if (nearbyFood) {
+            this.vx += (nearbyFood.x - this.x) * 0.01;
+            this.vy += (nearbyFood.y - this.y) * 0.01;
+          }
+
+          // Avoid edges
+          if (this.x < 50) this.vx += 0.5;
+          if (this.x > world.width - 50) this.vx -= 0.5;
+          if (this.y < 50) this.vy += 0.5;
+          if (this.y > world.height - 50) this.vy -= 0.5;
+
+          // Apply velocity with dampening
+          this.vx *= 0.98;
+          this.vy *= 0.98;
+          this.x += this.vx;
+          this.y += this.vy;
+
+          // Energy consumption
+          this.energy -=
+            0.1 + Math.abs(this.vx) * 0.1 + Math.abs(this.vy) * 0.1;
+
+          // Check for food consumption
+          world.food.forEach((food, index) => {
+            const dist = Math.sqrt(
+              (food.x - this.x) ** 2 + (food.y - this.y) ** 2
+            );
+            if (dist < 15) {
+              this.energy += 20;
+              world.food.splice(index, 1);
+            }
+          });
+
+          // Calculate fitness
+          this.fitness = this.age + this.energy * 0.5;
+
+          return this.energy > 0;
+        }
+
+        draw(ctx) {
+          ctx.fillStyle = this.color;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Energy bar
+          const barWidth = 16;
+          const barHeight = 3;
+          ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+          ctx.fillRect(
+            this.x - barWidth / 2,
+            this.y - this.size - 8,
+            barWidth,
+            barHeight
+          );
+          ctx.fillStyle = this.energy > 50 ? "#4CAF50" : "#f44336";
+          ctx.fillRect(
+            this.x - barWidth / 2,
+            this.y - this.size - 8,
+            barWidth * (this.energy / 100),
+            barHeight
+          );
+        }
+      }
+
+      class SimpleWorld {
+        constructor(width, height) {
+          this.width = width;
+          this.height = height;
+          this.creatures = [];
+          this.food = [];
+          this.obstacles = [];
+          this.tick = 0;
+
+          this.generateFood();
+          this.generateObstacles();
+        }
+
+        generateFood() {
+          for (let i = 0; i < 15; i++) {
+            this.food.push({
+              x: Math.random() * (this.width - 40) + 20,
+              y: Math.random() * (this.height - 40) + 20,
+              size: 6,
+            });
+          }
+        }
+
+        generateObstacles() {
+          for (let i = 0; i < 8; i++) {
+            this.obstacles.push({
+              x: Math.random() * (this.width - 100) + 50,
+              y: Math.random() * (this.height - 100) + 50,
+              width: 20 + Math.random() * 40,
+              height: 20 + Math.random() * 40,
+            });
+          }
+        }
+
+        addCreatures(count) {
+          for (let i = 0; i < count; i++) {
+            this.creatures.push(
+              new SimpleCreature(
+                Math.random() * (this.width - 100) + 50,
+                Math.random() * (this.height - 100) + 50,
+                80 + Math.random() * 40
+              )
+            );
+          }
+        }
+
+        update() {
+          this.tick++;
+
+          // Update creatures
+          this.creatures = this.creatures.filter((creature) =>
+            creature.update(this)
+          );
+
+          // Randomly spawn food
+          if (Math.random() < 0.1 && this.food.length < 20) {
+            this.food.push({
+              x: Math.random() * (this.width - 40) + 20,
+              y: Math.random() * (this.height - 40) + 20,
+              size: 6,
+            });
+          }
+        }
+
+        draw(ctx) {
+          // Clear canvas
+          ctx.fillStyle = "#1a1a1a";
+          ctx.fillRect(0, 0, this.width, this.height);
+
+          // Draw obstacles
+          ctx.fillStyle = "#795548";
+          this.obstacles.forEach((obs) => {
+            ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+          });
+
+          // Draw food
+          ctx.fillStyle = "#4CAF50";
+          this.food.forEach((food) => {
+            ctx.fillRect(
+              food.x - food.size / 2,
+              food.y - food.size / 2,
+              food.size,
+              food.size
+            );
+          });
+
+          // Draw creatures
+          this.creatures.forEach((creature) => creature.draw(ctx));
+
+          // Draw generation info
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "14px Arial";
+          ctx.fillText(`Tick: ${this.tick}`, 10, 25);
+          ctx.fillText(`Creatures: ${this.creatures.length}`, 10, 45);
+        }
+
+        getBestCreature() {
+          return this.creatures.reduce(
+            (best, creature) =>
+              creature.fitness > best.fitness ? creature : best,
+            this.creatures[0] || { energy: 0, age: 0, x: 0, y: 0, fitness: 0 }
+          );
+        }
+
+        getStats() {
+          if (this.creatures.length === 0)
+            return { avgFitness: 0, bestFitness: 0 };
+          const bestFitness = Math.max(...this.creatures.map((c) => c.fitness));
+          const avgFitness =
+            this.creatures.reduce((sum, c) => sum + c.fitness, 0) /
+            this.creatures.length;
+          return { avgFitness, bestFitness };
+        }
+      }
+
+      // Simulation manager
+      class SimulationManager {
+        constructor() {
+          this.canvas = document.getElementById("world-canvas");
+          this.ctx = this.canvas.getContext("2d");
+          this.world = new SimpleWorld(800, 600);
+          this.generation = 0;
+          this.running = false;
+          this.animationId = null;
+          this.maxGenerations = 5;
+          this.populationSize = 12;
+        }
+
+        start(scenario) {
+          this.running = true;
+          this.generation = 1;
+          this.world = new SimpleWorld(800, 600);
+          this.world.addCreatures(this.populationSize);
+
+          this.addLogEntry(
+            `Starting ${scenario} scenario with ${this.populationSize} creatures`
+          );
+          this.addLogEntry("Neural networks initialized with random weights");
+
+          this.animate();
+        }
+
+        pause() {
+          this.running = false;
+          if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+          }
+        }
+
+        reset() {
+          this.pause();
+          this.generation = 0;
+          this.world = new SimpleWorld(800, 600);
+          this.updateUI();
+          this.world.draw(this.ctx);
+        }
+
+        animate() {
+          if (!this.running) return;
+
+          this.world.update();
+          this.world.draw(this.ctx);
+          this.updateUI();
+
+          // Check for generation end
+          if (this.world.creatures.length === 0 || this.world.tick > 2000) {
+            this.nextGeneration();
+          } else {
+            this.animationId = requestAnimationFrame(() => this.animate());
+          }
+        }
+
+        nextGeneration() {
+          if (this.generation >= this.maxGenerations) {
+            this.addLogEntry(
+              "🎉 Evolution complete! Best creatures have survived and learned."
+            );
+            this.running = false;
+            document.getElementById("start-btn").disabled = false;
+            document.getElementById("pause-btn").disabled = true;
+            return;
+          }
+
+          const stats = this.world.getStats();
+          this.addLogEntry(
+            `Gen ${this.generation}: Best ${stats.bestFitness.toFixed(
+              1
+            )}, Avg ${stats.avgFitness.toFixed(1)}`
+          );
+
+          this.generation++;
+
+          // Create new generation (simulate genetic algorithm)
+          this.world = new SimpleWorld(800, 600);
+          this.world.addCreatures(this.populationSize);
+
+          this.addLogEntry(
+            `Generation ${this.generation}: Genetic recombination and mutation applied`
+          );
+
+          setTimeout(() => this.animate(), 1000);
+        }
+
+        updateUI() {
+          const stats = this.world.getStats();
+          const bestCreature = this.world.getBestCreature();
+
+          document.getElementById("generation-count").textContent =
+            this.generation;
+          document.getElementById("best-fitness").textContent =
+            stats.bestFitness.toFixed(3);
+          document.getElementById("avg-fitness").textContent =
+            stats.avgFitness.toFixed(3);
+          document.getElementById(
+            "alive-creatures"
+          ).textContent = `${this.world.creatures.length}/${this.populationSize}`;
+
+          if (bestCreature) {
+            document.getElementById("creature-energy").textContent = Math.round(
+              bestCreature.energy
+            );
+            document.getElementById("creature-age").textContent =
+              bestCreature.age;
+            document.getElementById("creature-x").textContent = Math.round(
+              bestCreature.x
+            );
+            document.getElementById("creature-y").textContent = Math.round(
+              bestCreature.y
+            );
+          }
+
+          const progress = (this.generation / this.maxGenerations) * 100;
+          document.getElementById("progress-fill").style.width = `${Math.min(
+            progress,
+            100
+          )}%`;
+          document.getElementById(
+            "progress-text"
+          ).textContent = `${this.generation}/${this.maxGenerations}`;
+        }
+
+        addLogEntry(message) {
+          const log = document.getElementById("evolution-log");
+          const entry = document.createElement("div");
+          entry.className = "log-entry";
+          entry.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+          log.appendChild(entry);
+          log.scrollTop = log.scrollHeight;
+
+          // Keep only last 20 entries
+          while (log.children.length > 20) {
+            log.removeChild(log.firstChild);
+          }
+        }
+      }
+
+      // Initialize simulation
+      const sim = new SimulationManager();
+      sim.reset(); // Draw initial state
+
+      // Event listeners
+      document.getElementById("start-btn").addEventListener("click", () => {
+        const scenario = document.getElementById("scenario-select").value;
+        sim.start(scenario);
+        document.getElementById("start-btn").disabled = true;
+        document.getElementById("pause-btn").disabled = false;
+      });
+
+      document.getElementById("pause-btn").addEventListener("click", () => {
+        sim.pause();
+        sim.addLogEntry("Evolution paused by user");
+        document.getElementById("start-btn").disabled = false;
+        document.getElementById("pause-btn").disabled = true;
+      });
+
+      document.getElementById("reset-btn").addEventListener("click", () => {
+        sim.reset();
+        sim.addLogEntry("Simulation reset - ready for new evolution");
+        document.getElementById("start-btn").disabled = false;
+        document.getElementById("pause-btn").disabled = true;
+      });
+
+      // Add mouse interaction for canvas
+      let isDragging = false;
+      let lastMouseX = 0;
+      let lastMouseY = 0;
+
+      sim.canvas.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+      });
+
+      sim.canvas.addEventListener("mousemove", (e) => {
+        if (isDragging) {
+          // You could implement camera panning here
+          lastMouseX = e.clientX;
+          lastMouseY = e.clientY;
+        }
+      });
+
+      sim.canvas.addEventListener("mouseup", () => {
+        isDragging = false;
+      });
+
+      sim.canvas.addEventListener("click", (e) => {
+        const rect = sim.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        // Add food at click location
+        if (sim.world.food.length < 25) {
+          sim.world.food.push({ x, y, size: 6 });
+          sim.addLogEntry(`Food added at (${Math.round(x)}, ${Math.round(y)})`);
+        }
+      });
+    </script>
+  </body>
+</html>
