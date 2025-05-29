@@ -7,6 +7,9 @@
 // Core types and interfaces
 export * from "./types";
 
+// Neural network persistence
+export * from "./neural-network-persistence";
+
 // Export browser-compatible implementations for browser builds
 export * from "./browser-persistence";
 export { BrowserPersistenceManager as PersistenceManager } from "./index.browser";
