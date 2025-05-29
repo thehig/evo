@@ -1,0 +1,1666 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Neural Evolution Simulator - Functional UI</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <script src="dist/bundle.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg-primary: #1e1e1e;
+        --bg-secondary: #2d2d2d;
+        --bg-panel: #252525;
+        --text-primary: #ffffff;
+        --text-secondary: #cccccc;
+        --accent-color: #0078d4;
+        --border-color: #404040;
+        --success-color: #4caf50;
+        --warning-color: #ff9800;
+        --error-color: #f44336;
+        --panel-width: 320px;
+      }
+
+      body {
+        font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        overflow: hidden;
+      }
+
+      .evolution-ui-container {
+        display: flex;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      .ui-renderer-section {
+        flex: 1;
+        position: relative;
+        background: var(--bg-secondary);
+        border-right: 1px solid var(--border-color);
+      }
+
+      .renderer-container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .renderer-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        pointer-events: none;
+      }
+
+      .ui-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(8px);
+        border-radius: 0 0 12px 12px;
+        margin: 0 16px 16px 16px;
+        pointer-events: auto;
+      }
+
+      .mode-switcher {
+        display: flex;
+        gap: 8px;
+      }
+
+      .mode-btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .mode-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .mode-btn.active {
+        background: var(--accent-color);
+      }
+
+      .simulation-controls {
+        display: flex;
+        gap: 8px;
+      }
+
+      .control-btn {
+        width: 40px;
+        height: 40px;
+        border: none;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+      }
+
+      .control-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: scale(1.05);
+      }
+
+      .control-btn:active {
+        transform: scale(0.95);
+      }
+
+      .ui-side-panel {
+        width: var(--panel-width);
+        background: var(--bg-primary);
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+      }
+
+      .ui-panel {
+        background: var(--bg-panel);
+        border-bottom: 1px solid var(--border-color);
+        padding: 16px;
+      }
+
+      .panel-title {
+        margin: 0 0 16px 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .control-group {
+        margin-bottom: 16px;
+      }
+
+      .control-group label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-secondary);
+      }
+
+      .ui-select,
+      .ui-slider {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-size: 14px;
+      }
+
+      .ui-slider {
+        padding: 0;
+        height: 6px;
+        background: var(--border-color);
+        cursor: pointer;
+      }
+
+      .ui-button {
+        padding: 10px 16px;
+        border: none;
+        border-radius: 6px;
+        background: var(--accent-color);
+        color: white;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        width: 100%;
+        margin-bottom: 8px;
+      }
+
+      .ui-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+
+      .ui-button.secondary {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .stat-item {
+        background: var(--bg-secondary);
+        padding: 12px;
+        border-radius: 8px;
+        text-align: center;
+        border: 1px solid var(--border-color);
+      }
+
+      .stat-value {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--accent-color);
+        margin-bottom: 4px;
+      }
+
+      .stat-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .progress-section {
+        margin-bottom: 20px;
+      }
+
+      .progress-label {
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: var(--text-secondary);
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: var(--border-color);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 6px;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          var(--success-color),
+          var(--accent-color)
+        );
+        width: 0%;
+        transition: width 0.3s ease;
+      }
+
+      .log-content {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: var(--bg-secondary);
+      }
+
+      .log-entry {
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      .log-time {
+        color: var(--text-secondary);
+        font-size: 11px;
+        margin-right: 8px;
+      }
+
+      .creature-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .creature-stat {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 8px;
+        background: var(--bg-secondary);
+        border-radius: 4px;
+        border: 1px solid var(--border-color);
+      }
+
+      .creature-stat .label {
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+
+      .fitness-chart {
+        margin-bottom: 20px;
+      }
+
+      .chart-header {
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: var(--text-secondary);
+      }
+
+      #fitness-chart {
+        width: 100%;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: var(--bg-secondary);
+      }
+
+      /* Neural Network Visualizer */
+      .neural-viz {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 12px;
+        margin-bottom: 16px;
+      }
+
+      .neural-layer {
+        display: flex;
+        justify-content: space-around;
+        margin: 8px 0;
+      }
+
+      .neural-node {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--accent-color);
+        position: relative;
+        opacity: 0.3;
+        transition: opacity 0.2s ease;
+      }
+
+      .neural-node.active {
+        opacity: 1;
+        box-shadow: 0 0 8px var(--accent-color);
+      }
+
+      .scenario-info {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 12px;
+        margin-bottom: 16px;
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+
+      /* Responsive design */
+      @media (max-width: 1200px) {
+        :root {
+          --panel-width: 280px;
+        }
+      }
+
+      @media (max-width: 900px) {
+        .evolution-ui-container {
+          flex-direction: column;
+        }
+
+        .ui-side-panel {
+          width: 100%;
+          height: 300px;
+          overflow-y: auto;
+        }
+
+        .ui-toolbar {
+          flex-direction: column;
+          gap: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="evolution-ui-container">
+      <!-- Main renderer section -->
+      <div class="ui-renderer-section">
+        <div class="renderer-container">
+          <div id="p5-container"></div>
+        </div>
+        <div class="renderer-overlay">
+          <div class="ui-toolbar">
+            <div class="mode-switcher">
+              <button class="mode-btn active" data-mode="training">
+                🧬 Training Mode
+              </button>
+              <button class="mode-btn" data-mode="world">🌍 World Mode</button>
+            </div>
+            <div class="simulation-controls">
+              <button id="play-btn" class="control-btn" title="Start/Resume">
+                ▶️
+              </button>
+              <button id="pause-btn" class="control-btn" title="Pause">
+                ⏸️
+              </button>
+              <button id="reset-btn" class="control-btn" title="Reset">
+                🔄
+              </button>
+              <button id="step-btn" class="control-btn" title="Single Step">
+                ⏭️
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Side panel with controls and stats -->
+      <div class="ui-side-panel">
+        <!-- Control Panel -->
+        <div class="control-panel ui-panel">
+          <h3 class="panel-title">🎛️ Controls</h3>
+
+          <div class="control-group">
+            <label for="scenario-select">Scenario:</label>
+            <select id="scenario-select" class="ui-select">
+              <option value="survival">🛡️ Survival Training</option>
+              <option value="exploration">🗺️ World Exploration</option>
+              <option value="energy_efficiency">⚡ Energy Efficiency</option>
+              <option value="movement_optimization">
+                🏃 Movement Optimization
+              </option>
+            </select>
+            <div id="scenario-info" class="scenario-info"></div>
+          </div>
+
+          <div class="control-group">
+            <label for="population-size"
+              >Population Size: <span id="population-value">50</span></label
+            >
+            <input
+              type="range"
+              id="population-size"
+              class="ui-slider"
+              min="10"
+              max="200"
+              value="50"
+            />
+          </div>
+
+          <div class="control-group">
+            <label for="mutation-rate"
+              >Mutation Rate: <span id="mutation-value">0.1</span></label
+            >
+            <input
+              type="range"
+              id="mutation-rate"
+              class="ui-slider"
+              min="0.01"
+              max="0.5"
+              step="0.01"
+              value="0.1"
+            />
+          </div>
+
+          <div class="control-group">
+            <label for="simulation-speed"
+              >Speed: <span id="speed-value">1x</span></label
+            >
+            <input
+              type="range"
+              id="simulation-speed"
+              class="ui-slider"
+              min="0.1"
+              max="5"
+              step="0.1"
+              value="1"
+            />
+          </div>
+
+          <div class="control-group">
+            <label>
+              <input type="checkbox" id="auto-evolve" checked />
+              Auto-evolve generations
+            </label>
+          </div>
+
+          <div class="control-group">
+            <label>
+              <input type="checkbox" id="show-neural-activity" />
+              Show neural activity
+            </label>
+          </div>
+
+          <div class="control-actions">
+            <button id="save-simulation" class="ui-button secondary">
+              💾 Save Simulation
+            </button>
+            <button id="load-simulation" class="ui-button secondary">
+              📁 Load Simulation
+            </button>
+            <button id="export-data" class="ui-button secondary">
+              📊 Export Data
+            </button>
+          </div>
+        </div>
+
+        <!-- Statistics Panel -->
+        <div class="stats-panel ui-panel">
+          <h3 class="panel-title">📊 Statistics</h3>
+
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-value" id="generation-count">0</div>
+              <div class="stat-label">Generation</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="best-fitness">0.00</div>
+              <div class="stat-label">Best Fitness</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="avg-fitness">0.00</div>
+              <div class="stat-label">Avg Fitness</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="alive-creatures">0/0</div>
+              <div class="stat-label">Alive</div>
+            </div>
+          </div>
+
+          <div class="progress-section">
+            <div class="progress-label">Generation Progress</div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="generation-progress"></div>
+            </div>
+            <div class="progress-text" id="progress-text">0/0 ticks</div>
+          </div>
+
+          <div class="fitness-chart">
+            <div class="chart-header">Fitness Evolution</div>
+            <canvas id="fitness-chart" width="280" height="120"></canvas>
+          </div>
+
+          <div class="best-creature-info">
+            <h4>🏆 Best Creature</h4>
+            <div class="creature-stats">
+              <div class="creature-stat">
+                <span class="label">Energy:</span>
+                <span id="best-energy">0</span>
+              </div>
+              <div class="creature-stat">
+                <span class="label">Age:</span>
+                <span id="best-age">0</span>
+              </div>
+              <div class="creature-stat">
+                <span class="label">Position:</span>
+                <span id="best-position">(0, 0)</span>
+              </div>
+              <div class="creature-stat">
+                <span class="label">Fitness:</span>
+                <span id="best-fitness-detail">0.00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Neural Network Visualizer -->
+          <div class="neural-viz" id="neural-viz" style="display: none">
+            <div class="chart-header">🧠 Neural Activity</div>
+            <div id="neural-network-display"></div>
+          </div>
+        </div>
+
+        <!-- Activity Log Panel -->
+        <div class="log-panel ui-panel">
+          <h3 class="panel-title">
+            📝 Activity Log
+            <button
+              id="clear-log"
+              style="
+                background: none;
+                border: none;
+                color: var(--text-secondary);
+                cursor: pointer;
+              "
+            >
+              🗑️
+            </button>
+          </h3>
+
+          <div class="log-content" id="log-content">
+            <div class="log-entry">
+              <span class="log-time">${new Date().toLocaleTimeString()}</span>
+              <span class="log-message"
+                >🎯 Neural Evolution Simulator ready</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Global simulation state
+      let sim = null;
+      let isRunning = false;
+      let isPaused = false;
+      let currentMode = "training";
+      let simulationSpeed = 1;
+      let fitnessHistory = [];
+      let maxFitnessHistory = 50;
+      let neuralVisualizationEnabled = false;
+
+      // P5.js canvas
+      let canvas;
+
+      // Simulation configuration
+      let simulationConfig = {
+        populationSize: 50,
+        mutationRate: 0.1,
+        scenario: "survival",
+        autoEvolve: true,
+      };
+
+      // UI Elements
+      const playBtn = document.getElementById("play-btn");
+      const pauseBtn = document.getElementById("pause-btn");
+      const resetBtn = document.getElementById("reset-btn");
+      const stepBtn = document.getElementById("step-btn");
+
+      // P5.js sketch
+      function setup() {
+        canvas = createCanvas(800, 600);
+        canvas.parent("p5-container");
+
+        // Initialize simulation system
+        initializeSimulation();
+      }
+
+      function draw() {
+        background(20);
+
+        if (sim && isRunning && !isPaused) {
+          // Update simulation at specified speed
+          for (let i = 0; i < simulationSpeed; i++) {
+            sim.step();
+          }
+        }
+
+        renderSimulation();
+        updateUI();
+      }
+
+      async function initializeSimulation() {
+        try {
+          logMessage("🔧 Initializing simulation system...");
+
+          // Use actual simulation components if available
+          if (typeof NeuralEvolution !== "undefined") {
+            sim = new NeuralEvolution.TrainingSimulator(
+              createSimulationConfig()
+            );
+            logMessage("✅ Real simulation system initialized");
+          } else {
+            // Fallback to mock simulation
+            sim = createMockSimulation();
+            logMessage("⚠️ Using mock simulation (bundle not loaded)");
+          }
+
+          await sim.initialize();
+          updateScenarioInfo();
+          logMessage("🎯 Simulation ready");
+        } catch (error) {
+          console.error("Simulation initialization failed:", error);
+          sim = createMockSimulation();
+          logMessage("⚠️ Fallback to mock simulation");
+        }
+      }
+
+      function createSimulationConfig() {
+        return {
+          maxTicks: 1000,
+          ticksPerSecond: 60,
+          tickRate: 1000 / 60,
+          pauseOnError: false,
+          geneticAlgorithm: {
+            populationSize: simulationConfig.populationSize,
+            mutationRate: simulationConfig.mutationRate,
+            crossoverRate: 0.7,
+            elitismRate: 0.1,
+            maxGenerations: 100,
+          },
+          scenario: getScenarioConfig(simulationConfig.scenario),
+          autoAdvanceGenerations: simulationConfig.autoEvolve,
+          saveInterval: 10,
+        };
+      }
+
+      function getScenarioConfig(scenarioType) {
+        // Simplified scenario configs
+        const scenarios = {
+          survival: {
+            name: "Survival Training",
+            description: "Creatures must survive as long as possible",
+            worldConfig: { width: 20, height: 20, seed: 12345 },
+            creatureConfig: {
+              initialEnergy: 100,
+              maxAge: 1000,
+              reproductionThreshold: 80,
+              mutationRate: 0.05,
+            },
+            neuralNetworkConfig: {
+              inputSize: 8,
+              hiddenSizes: [6, 4],
+              outputSize: 4,
+              activationFunction: "tanh",
+            },
+            fitnessFunction: (creature) => creature.energy + creature.age * 0.1,
+            maxSimulationTicks: 1000,
+          },
+          exploration: {
+            name: "Exploration Training",
+            description: "Creatures must explore the world efficiently",
+            worldConfig: { width: 30, height: 30, seed: 23456 },
+            creatureConfig: {
+              initialEnergy: 100,
+              maxAge: 1500,
+              reproductionThreshold: 80,
+              mutationRate: 0.05,
+            },
+            neuralNetworkConfig: {
+              inputSize: 10,
+              hiddenSizes: [8, 6],
+              outputSize: 4,
+              activationFunction: "tanh",
+            },
+            fitnessFunction: (creature) =>
+              creature.exploredCells * 10 + creature.energy,
+            maxSimulationTicks: 1500,
+          },
+        };
+
+        return scenarios[scenarioType] || scenarios.survival;
+      }
+
+      function createMockSimulation() {
+        return {
+          generation: 0,
+          tick: 0,
+          maxTicks: 1000,
+          creatures: [],
+          food: [],
+          obstacles: [],
+          bestFitness: 0,
+          avgFitness: 0,
+          stats: {},
+
+          async initialize() {
+            this.reset();
+          },
+
+          step() {
+            this.tick++;
+
+            // Update creatures with actual movement and behavior
+            this.creatures.forEach((c) => {
+              if (!c.alive) return;
+
+              // Age creature
+              c.age++;
+
+              // Basic AI decision making (simplified neural network simulation)
+              const decision = this.makeDecision(c);
+
+              // Apply movement based on decision
+              this.applyMovement(c, decision);
+
+              // Energy consumption based on movement
+              const energyCost =
+                0.1 + Math.abs(c.vx) * 0.05 + Math.abs(c.vy) * 0.05;
+              c.energy -= energyCost;
+
+              // Check for food collection
+              this.checkFoodCollection(c);
+
+              // Check for obstacle collisions
+              this.checkObstacleCollisions(c);
+
+              // Update fitness based on survival and exploration
+              c.fitness = this.calculateFitness(c);
+
+              // Death conditions
+              if (c.energy <= 0 || c.age > 2000) {
+                c.alive = false;
+              }
+            });
+
+            // Spawn new food occasionally
+            if (Math.random() < 0.03 && this.food.length < 30) {
+              this.spawnFood();
+            }
+
+            // Calculate population stats
+            const aliveCreatures = this.creatures.filter((c) => c.alive);
+            if (aliveCreatures.length > 0) {
+              this.bestFitness = Math.max(
+                ...aliveCreatures.map((c) => c.fitness)
+              );
+              this.avgFitness =
+                aliveCreatures.reduce((sum, c) => sum + c.fitness, 0) /
+                aliveCreatures.length;
+            }
+
+            // Check for generation end
+            if (aliveCreatures.length === 0 || this.tick >= this.maxTicks) {
+              this.nextGeneration();
+            }
+          },
+
+          makeDecision(creature) {
+            // Simulate neural network decision making
+            const inputs = this.getInputs(creature);
+            const network = creature.neuralNetwork;
+
+            // Simple feed-forward simulation
+            let layer1 = network.layers[0].map((w, i) =>
+              Math.tanh(inputs[i % inputs.length] * w)
+            );
+            let layer2 = network.layers[1].map((w, i) =>
+              Math.tanh(layer1[i % layer1.length] * w)
+            );
+            let outputs = network.layers[2].map((w, i) =>
+              Math.tanh(layer2[i % layer2.length] * w)
+            );
+
+            // Update network activations for visualization
+            network.layers = [inputs, layer1, layer2, outputs];
+
+            return {
+              moveX: outputs[0] || 0,
+              moveY: outputs[1] || 0,
+              speed: Math.abs(outputs[2] || 0.5),
+              rest: outputs[3] > 0.5,
+            };
+          },
+
+          getInputs(creature) {
+            const inputs = [];
+
+            // Energy level (0-1)
+            inputs.push(creature.energy / 100);
+
+            // Age normalized
+            inputs.push(Math.min(creature.age / 1000, 1));
+
+            // Position normalized
+            inputs.push(creature.x / 20);
+            inputs.push(creature.y / 20);
+
+            // Nearest food direction and distance
+            const nearestFood = this.findNearestFood(creature);
+            if (nearestFood) {
+              const dx = nearestFood.x - creature.x;
+              const dy = nearestFood.y - creature.y;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              inputs.push(dx / dist); // Direction x
+              inputs.push(dy / dist); // Direction y
+              inputs.push(1 / (1 + dist)); // Distance (inverse)
+            } else {
+              inputs.push(0, 0, 0);
+            }
+
+            // Random exploration factor
+            inputs.push(Math.random());
+
+            return inputs;
+          },
+
+          applyMovement(creature, decision) {
+            if (decision.rest) {
+              // Resting recovers a bit of energy
+              creature.energy += 0.02;
+              creature.vx *= 0.8; // Slow down
+              creature.vy *= 0.8;
+            } else {
+              // Apply movement
+              const maxSpeed = decision.speed * 2;
+              creature.vx += decision.moveX * 0.3;
+              creature.vy += decision.moveY * 0.3;
+
+              // Limit speed
+              const speed = Math.sqrt(
+                creature.vx * creature.vx + creature.vy * creature.vy
+              );
+              if (speed > maxSpeed) {
+                creature.vx = (creature.vx / speed) * maxSpeed;
+                creature.vy = (creature.vy / speed) * maxSpeed;
+              }
+            }
+
+            // Apply friction
+            creature.vx *= 0.95;
+            creature.vy *= 0.95;
+
+            // Update position
+            creature.x += creature.vx;
+            creature.y += creature.vy;
+
+            // Boundary wrapping
+            if (creature.x < 0) creature.x = 20;
+            if (creature.x > 20) creature.x = 0;
+            if (creature.y < 0) creature.y = 20;
+            if (creature.y > 20) creature.y = 0;
+
+            // Track exploration
+            const cellX = Math.floor(creature.x);
+            const cellY = Math.floor(creature.y);
+            const cellKey = `${cellX},${cellY}`;
+            if (!creature.visitedCells.has(cellKey)) {
+              creature.visitedCells.add(cellKey);
+              creature.exploredCells++;
+            }
+          },
+
+          findNearestFood(creature) {
+            let nearest = null;
+            let minDist = Infinity;
+
+            this.food.forEach((f) => {
+              const dx = f.x - creature.x;
+              const dy = f.y - creature.y;
+              const dist = dx * dx + dy * dy;
+              if (dist < minDist) {
+                minDist = dist;
+                nearest = f;
+              }
+            });
+
+            return nearest;
+          },
+
+          checkFoodCollection(creature) {
+            for (let i = this.food.length - 1; i >= 0; i--) {
+              const f = this.food[i];
+              const dx = creature.x - f.x;
+              const dy = creature.y - f.y;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+
+              if (dist < 0.8) {
+                // Collection radius
+                creature.energy += f.energy;
+                creature.energy = Math.min(creature.energy, 150); // Cap energy
+                creature.foodCollected++;
+                this.food.splice(i, 1);
+                break; // Only collect one food per tick
+              }
+            }
+          },
+
+          checkObstacleCollisions(creature) {
+            this.obstacles.forEach((obs) => {
+              if (
+                creature.x >= obs.x &&
+                creature.x <= obs.x + obs.width &&
+                creature.y >= obs.y &&
+                creature.y <= obs.y + obs.height
+              ) {
+                // Collision! Push creature out and apply damage
+                creature.energy -= 1;
+
+                // Push out of obstacle
+                const centerX = obs.x + obs.width / 2;
+                const centerY = obs.y + obs.height / 2;
+                const dx = creature.x - centerX;
+                const dy = creature.y - centerY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist > 0) {
+                  creature.x = centerX + (dx / dist) * (obs.width / 2 + 1);
+                  creature.y = centerY + (dy / dist) * (obs.height / 2 + 1);
+                }
+
+                // Reverse velocity
+                creature.vx *= -0.5;
+                creature.vy *= -0.5;
+              }
+            });
+          },
+
+          calculateFitness(creature) {
+            const scenario = getScenarioConfig(simulationConfig.scenario);
+
+            if (scenario.name.includes("Survival")) {
+              // Survival: energy + age + food collected
+              return (
+                creature.energy +
+                creature.age * 0.1 +
+                creature.foodCollected * 5
+              );
+            } else if (scenario.name.includes("Exploration")) {
+              // Exploration: explored cells + energy
+              return creature.exploredCells * 10 + creature.energy * 0.5;
+            } else {
+              // Default: balanced fitness
+              return (
+                creature.energy +
+                creature.age * 0.1 +
+                creature.exploredCells * 2
+              );
+            }
+          },
+
+          spawnFood() {
+            this.food.push({
+              x: Math.random() * 20,
+              y: Math.random() * 20,
+              energy: 15 + Math.random() * 10,
+            });
+          },
+
+          nextGeneration() {
+            this.generation++;
+            this.tick = 0;
+
+            // Add to fitness history
+            fitnessHistory.push({
+              generation: this.generation,
+              best: this.bestFitness,
+              avg: this.avgFitness,
+            });
+
+            if (fitnessHistory.length > maxFitnessHistory) {
+              fitnessHistory.shift();
+            }
+
+            // Simulate evolution: keep best performers
+            const survivors = this.creatures
+              .filter((c) => c.alive)
+              .sort((a, b) => b.fitness - a.fitness)
+              .slice(0, Math.floor(simulationConfig.populationSize * 0.2));
+
+            this.reset();
+
+            // Create new generation based on survivors
+            if (survivors.length > 0) {
+              this.evolveFromSurvivors(survivors);
+            }
+
+            logMessage(
+              `🎉 Generation ${
+                this.generation
+              } - Best: ${this.bestFitness.toFixed(1)} - Survivors: ${
+                survivors.length
+              }`
+            );
+          },
+
+          evolveFromSurvivors(survivors) {
+            const newCreatures = [];
+
+            // Keep elite survivors
+            survivors.forEach((survivor) => {
+              newCreatures.push(this.createCreatureFromParent(survivor, 0.01)); // Low mutation
+            });
+
+            // Fill remaining population with evolved offspring
+            while (newCreatures.length < simulationConfig.populationSize) {
+              const parent =
+                survivors[Math.floor(Math.random() * survivors.length)];
+              const mutationRate = simulationConfig.mutationRate;
+              newCreatures.push(
+                this.createCreatureFromParent(parent, mutationRate)
+              );
+            }
+
+            this.creatures = newCreatures;
+          },
+
+          createCreatureFromParent(parent, mutationRate) {
+            // Create mutated copy of parent's neural network
+            const newNetwork = {
+              layers: parent.neuralNetwork.layers.map((layer) =>
+                layer.map((weight) => {
+                  if (Math.random() < mutationRate) {
+                    return weight + (Math.random() - 0.5) * 0.5; // Mutation
+                  }
+                  return weight;
+                })
+              ),
+            };
+
+            return {
+              id: Math.random(),
+              x: Math.random() * 20,
+              y: Math.random() * 20,
+              vx: 0,
+              vy: 0,
+              energy: 100,
+              age: 0,
+              fitness: 0,
+              alive: true,
+              visitedCells: new Set(),
+              exploredCells: 0,
+              foodCollected: 0,
+              neuralNetwork: newNetwork,
+            };
+          },
+
+          reset() {
+            this.tick = 0;
+            this.creatures = [];
+            this.food = [];
+            this.obstacles = [];
+
+            // Create initial environment
+            this.createEnvironment();
+
+            // Create initial creatures
+            for (let i = 0; i < simulationConfig.populationSize; i++) {
+              this.creatures.push({
+                id: i,
+                x: Math.random() * 20,
+                y: Math.random() * 20,
+                vx: 0,
+                vy: 0,
+                energy: 100,
+                age: 0,
+                fitness: 0,
+                alive: true,
+                visitedCells: new Set(),
+                exploredCells: 0,
+                foodCollected: 0,
+                neuralNetwork: this.createMockNetwork(),
+              });
+            }
+          },
+
+          createEnvironment() {
+            // Create food sources
+            for (let i = 0; i < 20; i++) {
+              this.spawnFood();
+            }
+
+            // Create obstacles
+            for (let i = 0; i < 8; i++) {
+              this.obstacles.push({
+                x: Math.random() * 18,
+                y: Math.random() * 18,
+                width: 1 + Math.random() * 2,
+                height: 1 + Math.random() * 2,
+              });
+            }
+          },
+
+          createMockNetwork() {
+            return {
+              layers: [
+                Array(8)
+                  .fill(0)
+                  .map(() => (Math.random() - 0.5) * 2), // Input layer
+                Array(6)
+                  .fill(0)
+                  .map(() => (Math.random() - 0.5) * 2), // Hidden layer 1
+                Array(4)
+                  .fill(0)
+                  .map(() => (Math.random() - 0.5) * 2), // Hidden layer 2
+                Array(4)
+                  .fill(0)
+                  .map(() => (Math.random() - 0.5) * 2), // Output layer
+              ],
+            };
+          },
+        };
+      }
+
+      function renderSimulation() {
+        if (!sim) return;
+
+        // Clear canvas
+        background(20);
+
+        // Draw grid
+        stroke(40);
+        strokeWeight(1);
+        for (let x = 0; x < width; x += 40) {
+          line(x, 0, x, height);
+        }
+        for (let y = 0; y < height; y += 40) {
+          line(0, y, width, y);
+        }
+
+        // Draw obstacles
+        if (sim.obstacles) {
+          fill(139, 69, 19); // Brown
+          stroke(101, 67, 33);
+          strokeWeight(1);
+          sim.obstacles.forEach((obs) => {
+            const x = map(obs.x, 0, 20, 0, width);
+            const y = map(obs.y, 0, 20, 0, height);
+            const w = map(obs.width, 0, 20, 0, width);
+            const h = map(obs.height, 0, 20, 0, height);
+            rect(x, y, w, h);
+          });
+        }
+
+        // Draw food
+        if (sim.food) {
+          fill(50, 255, 50); // Bright green
+          noStroke();
+          sim.food.forEach((f) => {
+            const x = map(f.x, 0, 20, 0, width);
+            const y = map(f.y, 0, 20, 0, height);
+            const size = map(f.energy, 10, 25, 6, 12);
+            circle(x, y, size);
+
+            // Add glow effect
+            fill(50, 255, 50, 100);
+            circle(x, y, size + 4);
+            fill(50, 255, 50);
+          });
+        }
+
+        // Draw creatures
+        sim.creatures.forEach((creature) => {
+          if (!creature.alive) return;
+
+          const x = map(creature.x, 0, 20, 0, width);
+          const y = map(creature.y, 0, 20, 0, height);
+
+          // Creature body - color based on energy and age
+          const energyRatio = creature.energy / 100;
+          const ageRatio = Math.min(creature.age / 1000, 1);
+
+          if (energyRatio > 0.7) {
+            fill(0, 255, 100); // High energy - bright green
+          } else if (energyRatio > 0.3) {
+            fill(255, 255, 0); // Medium energy - yellow
+          } else {
+            fill(255, 100, 0); // Low energy - orange/red
+          }
+
+          stroke(255);
+          strokeWeight(energyRatio > 0.5 ? 2 : 1);
+
+          // Draw creature with size based on age
+          const creatureSize = 8 + ageRatio * 4;
+          circle(x, y, creatureSize);
+
+          // Draw movement direction
+          if (creature.vx || creature.vy) {
+            stroke(255, 255, 255, 150);
+            strokeWeight(2);
+            const dirLength = 15;
+            const speed = Math.sqrt(
+              creature.vx * creature.vx + creature.vy * creature.vy
+            );
+            if (speed > 0) {
+              const dirX = (creature.vx / speed) * dirLength;
+              const dirY = (creature.vy / speed) * dirLength;
+              line(x, y, x + dirX, y + dirY);
+
+              // Arrow head
+              const angle = Math.atan2(dirY, dirX);
+              const arrowSize = 4;
+              line(
+                x + dirX,
+                y + dirY,
+                x + dirX - arrowSize * Math.cos(angle - Math.PI / 6),
+                y + dirY - arrowSize * Math.sin(angle - Math.PI / 6)
+              );
+              line(
+                x + dirX,
+                y + dirY,
+                x + dirX - arrowSize * Math.cos(angle + Math.PI / 6),
+                y + dirY - arrowSize * Math.sin(angle + Math.PI / 6)
+              );
+            }
+          }
+
+          // Energy bar
+          fill(255, 0, 0);
+          noStroke();
+          const barWidth = 16;
+          const barHeight = 3;
+          rect(x - barWidth / 2, y - creatureSize / 2 - 8, barWidth, barHeight);
+          fill(0, 255, 0);
+          rect(
+            x - barWidth / 2,
+            y - creatureSize / 2 - 8,
+            map(creature.energy, 0, 150, 0, barWidth),
+            barHeight
+          );
+
+          // Show fitness for best creature
+          if (creature.fitness === sim.bestFitness && sim.bestFitness > 0) {
+            fill(255, 255, 0);
+            stroke(0);
+            strokeWeight(1);
+            textAlign(CENTER);
+            textSize(10);
+            text("★", x, y - creatureSize / 2 - 15);
+          }
+        });
+
+        // HUD with more detailed information
+        fill(255);
+        noStroke();
+        textAlign(LEFT);
+        textSize(14);
+        text(`Generation: ${sim.generation}`, 10, 20);
+        text(`Tick: ${sim.tick}/${sim.maxTicks}`, 10, 40);
+        text(
+          `Creatures: ${sim.creatures.filter((c) => c.alive).length}/${
+            sim.creatures.length
+          }`,
+          10,
+          60
+        );
+        text(`Best Fitness: ${sim.bestFitness.toFixed(1)}`, 10, 80);
+
+        if (sim.food) {
+          text(`Food: ${sim.food.length}`, 10, 100);
+        }
+
+        // Show speed indicator
+        fill(200);
+        textSize(12);
+        text(`Speed: ${simulationSpeed}x`, 10, height - 20);
+
+        // Show scenario
+        text(`Scenario: ${simulationConfig.scenario}`, 10, height - 40);
+      }
+
+      function updateUI() {
+        if (!sim) return;
+
+        const aliveCount = sim.creatures.filter((c) => c.alive).length;
+
+        // Update statistics
+        document.getElementById("generation-count").textContent =
+          sim.generation;
+        document.getElementById("best-fitness").textContent =
+          sim.bestFitness.toFixed(2);
+        document.getElementById("avg-fitness").textContent =
+          sim.avgFitness.toFixed(2);
+        document.getElementById(
+          "alive-creatures"
+        ).textContent = `${aliveCount}/${sim.creatures.length}`;
+
+        // Update progress
+        const progress = (sim.tick / sim.maxTicks) * 100;
+        document.getElementById(
+          "generation-progress"
+        ).style.width = `${progress}%`;
+        document.getElementById(
+          "progress-text"
+        ).textContent = `${sim.tick}/${sim.maxTicks} ticks`;
+
+        // Update best creature info
+        const bestCreature = sim.creatures.reduce(
+          (best, current) => (current.fitness > best.fitness ? current : best),
+          sim.creatures[0] || { fitness: 0, energy: 0, age: 0, x: 0, y: 0 }
+        );
+
+        if (bestCreature) {
+          document.getElementById("best-energy").textContent = Math.round(
+            bestCreature.energy
+          );
+          document.getElementById("best-age").textContent = bestCreature.age;
+          document.getElementById("best-position").textContent = `(${Math.round(
+            bestCreature.x
+          )}, ${Math.round(bestCreature.y)})`;
+          document.getElementById("best-fitness-detail").textContent =
+            bestCreature.fitness.toFixed(2);
+
+          // Update neural visualization
+          if (neuralVisualizationEnabled && bestCreature.neuralNetwork) {
+            updateNeuralVisualization(bestCreature.neuralNetwork);
+          }
+        }
+
+        // Update fitness chart
+        updateFitnessChart();
+      }
+
+      function updateNeuralVisualization(network) {
+        const container = document.getElementById("neural-network-display");
+        if (!container) return;
+
+        let html = "";
+        network.layers.forEach((layer, layerIndex) => {
+          html += '<div class="neural-layer">';
+          layer.forEach((activation, nodeIndex) => {
+            const isActive = activation > 0.5;
+            html += `<div class="neural-node ${
+              isActive ? "active" : ""
+            }"></div>`;
+          });
+          html += "</div>";
+        });
+
+        container.innerHTML = html;
+      }
+
+      function updateFitnessChart() {
+        const canvas = document.getElementById("fitness-chart");
+        if (!canvas || fitnessHistory.length === 0) return;
+
+        const ctx = canvas.getContext("2d");
+
+        // Clear canvas
+        ctx.fillStyle = "#2d2d2d";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        if (fitnessHistory.length < 2) return;
+
+        // Calculate scales
+        const maxFitness = Math.max(...fitnessHistory.map((h) => h.best));
+        const minFitness = Math.min(
+          ...fitnessHistory.map((h) => Math.min(h.best, h.avg))
+        );
+
+        // Draw best fitness line
+        ctx.strokeStyle = "#0078d4";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+
+        fitnessHistory.forEach((point, index) => {
+          const x = (index / (fitnessHistory.length - 1)) * canvas.width;
+          const y =
+            canvas.height -
+            ((point.best - minFitness) / (maxFitness - minFitness)) *
+              canvas.height;
+
+          if (index === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+
+        ctx.stroke();
+
+        // Draw average fitness line
+        ctx.strokeStyle = "#4caf50";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+
+        fitnessHistory.forEach((point, index) => {
+          const x = (index / (fitnessHistory.length - 1)) * canvas.width;
+          const y =
+            canvas.height -
+            ((point.avg - minFitness) / (maxFitness - minFitness)) *
+              canvas.height;
+
+          if (index === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+
+        ctx.stroke();
+      }
+
+      function updateScenarioInfo() {
+        const scenarioSelect = document.getElementById("scenario-select");
+        const scenarioInfo = document.getElementById("scenario-info");
+        const scenario = getScenarioConfig(scenarioSelect.value);
+
+        scenarioInfo.innerHTML = `
+                <strong>${scenario.name}</strong><br>
+                ${scenario.description}<br>
+                <small>Max ticks: ${scenario.maxSimulationTicks}</small>
+            `;
+      }
+
+      // Event handlers
+      playBtn.addEventListener("click", () => {
+        isRunning = true;
+        isPaused = false;
+        playBtn.style.opacity = "0.5";
+        pauseBtn.style.opacity = "1";
+        logMessage("▶️ Simulation started");
+      });
+
+      pauseBtn.addEventListener("click", () => {
+        isPaused = true;
+        playBtn.style.opacity = "1";
+        pauseBtn.style.opacity = "0.5";
+        logMessage("⏸️ Simulation paused");
+      });
+
+      resetBtn.addEventListener("click", async () => {
+        isRunning = false;
+        isPaused = false;
+        fitnessHistory = [];
+        playBtn.style.opacity = "1";
+        pauseBtn.style.opacity = "0.5";
+
+        if (sim) {
+          await sim.initialize();
+        }
+
+        logMessage("🔄 Simulation reset");
+      });
+
+      stepBtn.addEventListener("click", () => {
+        if (sim && isRunning) {
+          sim.step();
+          logMessage("⏭️ Single step executed");
+        }
+      });
+
+      // Mode switching
+      document.querySelectorAll(".mode-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          currentMode = btn.dataset.mode;
+          document
+            .querySelectorAll(".mode-btn")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          logMessage(`🔄 Switched to ${currentMode} mode`);
+        });
+      });
+
+      // Control updates
+      document
+        .getElementById("population-size")
+        .addEventListener("input", (e) => {
+          simulationConfig.populationSize = parseInt(e.target.value);
+          document.getElementById("population-value").textContent =
+            e.target.value;
+          logMessage(`👥 Population size: ${e.target.value}`);
+        });
+
+      document
+        .getElementById("mutation-rate")
+        .addEventListener("input", (e) => {
+          simulationConfig.mutationRate = parseFloat(e.target.value);
+          document.getElementById("mutation-value").textContent =
+            e.target.value;
+          logMessage(`🧬 Mutation rate: ${e.target.value}`);
+        });
+
+      document
+        .getElementById("simulation-speed")
+        .addEventListener("input", (e) => {
+          simulationSpeed = parseFloat(e.target.value);
+          document.getElementById("speed-value").textContent =
+            e.target.value + "x";
+          logMessage(`⚡ Speed: ${e.target.value}x`);
+        });
+
+      document
+        .getElementById("scenario-select")
+        .addEventListener("change", (e) => {
+          simulationConfig.scenario = e.target.value;
+          updateScenarioInfo();
+          logMessage(
+            `🎯 Scenario: ${e.target.options[e.target.selectedIndex].text}`
+          );
+        });
+
+      document.getElementById("auto-evolve").addEventListener("change", (e) => {
+        simulationConfig.autoEvolve = e.target.checked;
+        logMessage(
+          `🔄 Auto-evolve: ${e.target.checked ? "enabled" : "disabled"}`
+        );
+      });
+
+      // Neural activity toggle
+      document
+        .getElementById("show-neural-activity")
+        .addEventListener("change", (e) => {
+          neuralVisualizationEnabled = e.target.checked;
+          const neuralViz = document.getElementById("neural-viz");
+          neuralViz.style.display = e.target.checked ? "block" : "none";
+          logMessage(
+            `🧠 Neural visualization: ${
+              e.target.checked ? "enabled" : "disabled"
+            }`
+          );
+        });
+
+      // Log function
+      function logMessage(message) {
+        const logContent = document.getElementById("log-content");
+        const entry = document.createElement("div");
+        entry.className = "log-entry";
+        entry.innerHTML = `
+                <span class="log-time">${new Date().toLocaleTimeString()}</span>
+                <span class="log-message">${message}</span>
+            `;
+
+        logContent.appendChild(entry);
+        logContent.scrollTop = logContent.scrollHeight;
+
+        // Keep only last 50 entries
+        while (logContent.children.length > 50) {
+          logContent.removeChild(logContent.firstChild);
+        }
+      }
+
+      // Clear log
+      document.getElementById("clear-log").addEventListener("click", () => {
+        document.getElementById("log-content").innerHTML = "";
+        logMessage("🗑️ Log cleared");
+      });
+
+      // Save/Load/Export functionality
+      document
+        .getElementById("save-simulation")
+        .addEventListener("click", () => {
+          if (sim) {
+            const data = {
+              generation: sim.generation,
+              fitnessHistory: fitnessHistory,
+              config: simulationConfig,
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], {
+              type: "application/json",
+            });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `evolution-simulation-gen${sim.generation}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            logMessage("💾 Simulation saved");
+          }
+        });
+
+      document.getElementById("export-data").addEventListener("click", () => {
+        if (fitnessHistory.length > 0) {
+          let csv = "Generation,Best Fitness,Average Fitness\n";
+          fitnessHistory.forEach((h) => {
+            csv += `${h.generation},${h.best},${h.avg}\n`;
+          });
+
+          const blob = new Blob([csv], { type: "text/csv" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "fitness-data.csv";
+          a.click();
+          URL.revokeObjectURL(url);
+
+          logMessage("📊 Data exported");
+        }
+      });
+
+      // Initialize on load
+      window.addEventListener("load", () => {
+        updateScenarioInfo();
+        logMessage("🎯 Neural Evolution Simulator ready");
+      });
+    </script>
+  </body>
+</html>

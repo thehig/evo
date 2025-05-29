@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Neural Evolution Simulator - Full UI</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg-primary: #1e1e1e;
+        --bg-secondary: #2d2d2d;
+        --bg-panel: #252525;
+        --text-primary: #ffffff;
+        --text-secondary: #cccccc;
+        --accent-color: #0078d4;
+        --border-color: #404040;
+        --success-color: #4caf50;
+        --warning-color: #ff9800;
+        --error-color: #f44336;
+        --panel-width: 320px;
+      }
+
+      body {
+        font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        overflow: hidden;
+      }
+
+      .evolution-ui-container {
+        display: flex;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      .ui-renderer-section {
+        flex: 1;
+        position: relative;
+        background: var(--bg-secondary);
+        border-right: 1px solid var(--border-color);
+      }
+
+      .renderer-container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .renderer-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        pointer-events: none;
+      }
+
+      .ui-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(8px);
+        border-radius: 0 0 12px 12px;
+        margin: 0 16px 16px 16px;
+        pointer-events: auto;
+      }
+
+      .mode-switcher {
+        display: flex;
+        gap: 8px;
+      }
+
+      .mode-btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .mode-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .mode-btn.active {
+        background: var(--accent-color);
+      }
+
+      .simulation-controls {
+        display: flex;
+        gap: 8px;
+      }
+
+      .control-btn {
+        width: 40px;
+        height: 40px;
+        border: none;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+      }
+
+      .control-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: scale(1.05);
+      }
+
+      .control-btn:active {
+        transform: scale(0.95);
+      }
+
+      .ui-side-panel {
+        width: var(--panel-width);
+        background: var(--bg-primary);
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+      }
+
+      .ui-panel {
+        background: var(--bg-panel);
+        border-bottom: 1px solid var(--border-color);
+        padding: 16px;
+      }
+
+      .panel-title {
+        margin: 0 0 16px 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .control-group {
+        margin-bottom: 16px;
+      }
+
+      .control-group label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-secondary);
+      }
+
+      .ui-select,
+      .ui-slider {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-size: 14px;
+      }
+
+      .ui-slider {
+        padding: 0;
+        height: 6px;
+        background: var(--border-color);
+        cursor: pointer;
+      }
+
+      .ui-button {
+        padding: 10px 16px;
+        border: none;
+        border-radius: 6px;
+        background: var(--accent-color);
+        color: white;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        width: 100%;
+        margin-bottom: 8px;
+      }
+
+      .ui-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+
+      .ui-button.secondary {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .stat-item {
+        background: var(--bg-secondary);
+        padding: 12px;
+        border-radius: 8px;
+        text-align: center;
+        border: 1px solid var(--border-color);
+      }
+
+      .stat-value {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--accent-color);
+        margin-bottom: 4px;
+      }
+
+      .stat-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .progress-section {
+        margin-bottom: 20px;
+      }
+
+      .progress-label {
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: var(--text-secondary);
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: var(--border-color);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 6px;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          var(--success-color),
+          var(--accent-color)
+        );
+        width: 0%;
+        transition: width 0.3s ease;
+      }
+
+      .log-content {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: var(--bg-secondary);
+      }
+
+      .log-entry {
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      .log-time {
+        color: var(--text-secondary);
+        font-size: 11px;
+        margin-right: 8px;
+      }
+
+      .creature-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .creature-stat {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 8px;
+        background: var(--bg-secondary);
+        border-radius: 4px;
+        border: 1px solid var(--border-color);
+      }
+
+      .creature-stat .label {
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+
+      .fitness-chart {
+        margin-bottom: 20px;
+      }
+
+      .chart-header {
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: var(--text-secondary);
+      }
+
+      #fitness-chart {
+        width: 100%;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: var(--bg-secondary);
+      }
+
+      /* Neural Network Visualizer */
+      .neural-viz {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 12px;
+        margin-bottom: 16px;
+      }
+
+      .neural-layer {
+        display: flex;
+        justify-content: space-around;
+        margin: 8px 0;
+      }
+
+      .neural-node {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--accent-color);
+        position: relative;
+        opacity: 0.7;
+      }
+
+      .neural-node.active {
+        opacity: 1;
+        box-shadow: 0 0 8px var(--accent-color);
+      }
+
+      /* Responsive design */
+      @media (max-width: 1200px) {
+        :root {
+          --panel-width: 280px;
+        }
+      }
+
+      @media (max-width: 900px) {
+        .evolution-ui-container {
+          flex-direction: column;
+        }
+
+        .ui-side-panel {
+          width: 100%;
+          height: 300px;
+          overflow-y: auto;
+        }
+
+        .ui-toolbar {
+          flex-direction: column;
+          gap: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="evolution-ui-container">
+      <!-- Main renderer section -->
+      <div class="ui-renderer-section">
+        <div class="renderer-container">
+          <div id="p5-container"></div>
+        </div>
+        <div class="renderer-overlay">
+          <div class="ui-toolbar">
+            <div class="mode-switcher">
+              <button class="mode-btn active" data-mode="training">
+                🧬 Training Mode
+              </button>
+              <button class="mode-btn" data-mode="world">🌍 World Mode</button>
+            </div>
+            <div class="simulation-controls">
+              <button id="play-btn" class="control-btn" title="Start/Resume">
+                ▶️
+              </button>
+              <button id="pause-btn" class="control-btn" title="Pause">
+                ⏸️
+              </button>
+              <button id="reset-btn" class="control-btn" title="Reset">
+                🔄
+              </button>
+              <button id="step-btn" class="control-btn" title="Single Step">
+                ⏭️
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Side panel with controls and stats -->
+      <div class="ui-side-panel">
+        <!-- Control Panel -->
+        <div class="control-panel ui-panel">
+          <h3 class="panel-title">🎛️ Controls</h3>
+
+          <div class="control-group">
+            <label for="scenario-select">Scenario:</label>
+            <select id="scenario-select" class="ui-select">
+              <option value="survival">🛡️ Survival Training</option>
+              <option value="exploration">🗺️ World Exploration</option>
+              <option value="energy">⚡ Energy Efficiency</option>
+              <option value="movement">🏃 Movement Optimization</option>
+              <option value="social">👥 Social Behavior</option>
+              <option value="predator">🦁 Predator-Prey</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label for="population-size"
+              >Population Size: <span id="population-value">50</span></label
+            >
+            <input
+              type="range"
+              id="population-size"
+              class="ui-slider"
+              min="10"
+              max="200"
+              value="50"
+            />
+          </div>
+
+          <div class="control-group">
+            <label for="mutation-rate"
+              >Mutation Rate: <span id="mutation-value">0.1</span></label
+            >
+            <input
+              type="range"
+              id="mutation-rate"
+              class="ui-slider"
+              min="0.01"
+              max="0.5"
+              step="0.01"
+              value="0.1"
+            />
+          </div>
+
+          <div class="control-group">
+            <label for="simulation-speed"
+              >Speed: <span id="speed-value">1x</span></label
+            >
+            <input
+              type="range"
+              id="simulation-speed"
+              class="ui-slider"
+              min="0.1"
+              max="5"
+              step="0.1"
+              value="1"
+            />
+          </div>
+
+          <div class="control-group">
+            <label>
+              <input type="checkbox" id="auto-evolve" checked />
+              Auto-evolve generations
+            </label>
+          </div>
+
+          <div class="control-group">
+            <label>
+              <input type="checkbox" id="show-neural-activity" />
+              Show neural activity
+            </label>
+          </div>
+
+          <div class="control-actions">
+            <button id="save-simulation" class="ui-button secondary">
+              💾 Save Simulation
+            </button>
+            <button id="load-simulation" class="ui-button secondary">
+              📁 Load Simulation
+            </button>
+            <button id="export-data" class="ui-button secondary">
+              📊 Export Data
+            </button>
+          </div>
+        </div>
+
+        <!-- Statistics Panel -->
+        <div class="stats-panel ui-panel">
+          <h3 class="panel-title">📊 Statistics</h3>
+
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-value" id="generation-count">1</div>
+              <div class="stat-label">Generation</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="best-fitness">87.3</div>
+              <div class="stat-label">Best Fitness</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="avg-fitness">42.1</div>
+              <div class="stat-label">Avg Fitness</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="alive-creatures">23/50</div>
+              <div class="stat-label">Alive</div>
+            </div>
+          </div>
+
+          <div class="progress-section">
+            <div class="progress-label">Generation Progress</div>
+            <div class="progress-bar">
+              <div
+                class="progress-fill"
+                id="generation-progress"
+                style="width: 65%"
+              ></div>
+            </div>
+            <div class="progress-text" id="progress-text">650/1000 ticks</div>
+          </div>
+
+          <div class="fitness-chart">
+            <div class="chart-header">Fitness Evolution</div>
+            <canvas id="fitness-chart" width="280" height="120"></canvas>
+          </div>
+
+          <div class="best-creature-info">
+            <h4>🏆 Best Creature</h4>
+            <div class="creature-stats">
+              <div class="creature-stat">
+                <span class="label">Energy:</span>
+                <span id="best-energy">92</span>
+              </div>
+              <div class="creature-stat">
+                <span class="label">Age:</span>
+                <span id="best-age">347</span>
+              </div>
+              <div class="creature-stat">
+                <span class="label">Position:</span>
+                <span id="best-position">(45, 23)</span>
+              </div>
+              <div class="creature-stat">
+                <span class="label">Fitness:</span>
+                <span id="best-fitness-detail">87.3</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Neural Network Visualizer -->
+          <div class="neural-viz" id="neural-viz" style="display: none">
+            <div class="chart-header">🧠 Neural Activity</div>
+            <div class="neural-layer">
+              <div class="neural-node active"></div>
+              <div class="neural-node"></div>
+              <div class="neural-node active"></div>
+              <div class="neural-node"></div>
+            </div>
+            <div class="neural-layer">
+              <div class="neural-node active"></div>
+              <div class="neural-node active"></div>
+              <div class="neural-node"></div>
+            </div>
+            <div class="neural-layer">
+              <div class="neural-node"></div>
+              <div class="neural-node active"></div>
+              <div class="neural-node"></div>
+              <div class="neural-node active"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activity Log Panel -->
+        <div class="log-panel ui-panel">
+          <h3 class="panel-title">
+            📝 Activity Log
+            <button
+              id="clear-log"
+              style="
+                background: none;
+                border: none;
+                color: var(--text-secondary);
+                cursor: pointer;
+              "
+            >
+              🗑️
+            </button>
+          </h3>
+
+          <div class="log-content" id="log-content">
+            <div class="log-entry">
+              <span class="log-time">12:34:56</span>
+              <span class="log-message"
+                >🎯 Neural Evolution Simulator ready</span
+              >
+            </div>
+            <div class="log-entry">
+              <span class="log-time">12:35:02</span>
+              <span class="log-message">🧬 Training mode activated</span>
+            </div>
+            <div class="log-entry">
+              <span class="log-time">12:35:03</span>
+              <span class="log-message">🛡️ Survival scenario loaded</span>
+            </div>
+            <div class="log-entry">
+              <span class="log-time">12:35:05</span>
+              <span class="log-message">▶️ Simulation started</span>
+            </div>
+            <div class="log-entry">
+              <span class="log-time">12:35:23</span>
+              <span class="log-message">🎉 New best fitness: 87.3</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Simulation state
+      let isRunning = false;
+      let isPaused = false;
+      let currentMode = "training";
+      let creatures = [];
+      let food = [];
+      let obstacles = [];
+      let generation = 1;
+      let tick = 0;
+      let maxTicks = 1000;
+
+      // UI Elements
+      const playBtn = document.getElementById("play-btn");
+      const pauseBtn = document.getElementById("pause-btn");
+      const resetBtn = document.getElementById("reset-btn");
+      const stepBtn = document.getElementById("step-btn");
+
+      // P5.js sketch
+      function setup() {
+        const canvas = createCanvas(800, 600);
+        canvas.parent("p5-container");
+
+        // Initialize simulation
+        resetSimulation();
+      }
+
+      function draw() {
+        background(20);
+
+        if (isRunning && !isPaused) {
+          updateSimulation();
+        }
+
+        renderSimulation();
+        updateUI();
+      }
+
+      function resetSimulation() {
+        creatures = [];
+        food = [];
+        obstacles = [];
+        tick = 0;
+
+        // Create creatures
+        for (let i = 0; i < 50; i++) {
+          creatures.push({
+            x: random(width),
+            y: random(height),
+            energy: 100,
+            age: 0,
+            fitness: 0,
+            color: color(random(100, 255), random(100, 255), random(100, 255)),
+            vx: random(-2, 2),
+            vy: random(-2, 2),
+            alive: true,
+          });
+        }
+
+        // Create food
+        for (let i = 0; i < 30; i++) {
+          food.push({
+            x: random(width),
+            y: random(height),
+            energy: 20,
+          });
+        }
+
+        // Create obstacles
+        for (let i = 0; i < 10; i++) {
+          obstacles.push({
+            x: random(width),
+            y: random(height),
+            width: random(20, 40),
+            height: random(20, 40),
+          });
+        }
+      }
+
+      function updateSimulation() {
+        tick++;
+
+        // Update creatures
+        creatures.forEach((creature) => {
+          if (!creature.alive) return;
+
+          // Simple movement
+          creature.x += creature.vx;
+          creature.y += creature.vy;
+
+          // Wrap around screen
+          if (creature.x < 0) creature.x = width;
+          if (creature.x > width) creature.x = 0;
+          if (creature.y < 0) creature.y = height;
+          if (creature.y > height) creature.y = 0;
+
+          // Age and energy loss
+          creature.age++;
+          creature.energy -= 0.1;
+
+          // Check for food
+          food.forEach((f, index) => {
+            const d = dist(creature.x, creature.y, f.x, f.y);
+            if (d < 15) {
+              creature.energy += f.energy;
+              food.splice(index, 1);
+            }
+          });
+
+          // Update fitness
+          creature.fitness = creature.energy + creature.age * 0.1;
+
+          // Death check
+          if (creature.energy <= 0 || creature.age > 2000) {
+            creature.alive = false;
+          }
+        });
+
+        // Spawn new food occasionally
+        if (random() < 0.02) {
+          food.push({
+            x: random(width),
+            y: random(height),
+            energy: 20,
+          });
+        }
+
+        // Check for generation end
+        const aliveCount = creatures.filter((c) => c.alive).length;
+        if (aliveCount === 0 || tick >= maxTicks) {
+          nextGeneration();
+        }
+      }
+
+      function nextGeneration() {
+        generation++;
+        tick = 0;
+
+        // Calculate stats
+        const bestFitness = Math.max(...creatures.map((c) => c.fitness));
+        const avgFitness =
+          creatures.reduce((sum, c) => sum + c.fitness, 0) / creatures.length;
+
+        // Log generation complete
+        logMessage(
+          `🎉 Generation ${
+            generation - 1
+          } complete! Best: ${bestFitness.toFixed(1)}`
+        );
+
+        // Reset for next generation (simplified)
+        resetSimulation();
+      }
+
+      function renderSimulation() {
+        // Render food
+        fill(50, 255, 50);
+        noStroke();
+        food.forEach((f) => {
+          circle(f.x, f.y, 8);
+        });
+
+        // Render obstacles
+        fill(139, 69, 19);
+        obstacles.forEach((obs) => {
+          rect(obs.x, obs.y, obs.width, obs.height);
+        });
+
+        // Render creatures
+        creatures.forEach((creature) => {
+          if (!creature.alive) return;
+
+          fill(creature.color);
+          stroke(255);
+          strokeWeight(creature.energy > 50 ? 2 : 1);
+
+          push();
+          translate(creature.x, creature.y);
+
+          // Body
+          circle(0, 0, 12);
+
+          // Energy bar
+          fill(255, 0, 0);
+          rect(-6, -10, 12, 2);
+          fill(0, 255, 0);
+          rect(-6, -10, map(creature.energy, 0, 100, 0, 12), 2);
+
+          pop();
+        });
+
+        // HUD
+        fill(255);
+        textAlign(LEFT);
+        text(`Generation: ${generation}`, 10, 20);
+        text(`Tick: ${tick}/${maxTicks}`, 10, 40);
+        text(
+          `Creatures: ${creatures.filter((c) => c.alive).length}/${
+            creatures.length
+          }`,
+          10,
+          60
+        );
+      }
+
+      function updateUI() {
+        // Update statistics
+        const aliveCount = creatures.filter((c) => c.alive).length;
+        const bestFitness =
+          creatures.length > 0
+            ? Math.max(...creatures.map((c) => c.fitness))
+            : 0;
+        const avgFitness =
+          creatures.length > 0
+            ? creatures.reduce((sum, c) => sum + c.fitness, 0) /
+              creatures.length
+            : 0;
+
+        document.getElementById("generation-count").textContent = generation;
+        document.getElementById("best-fitness").textContent =
+          bestFitness.toFixed(1);
+        document.getElementById("avg-fitness").textContent =
+          avgFitness.toFixed(1);
+        document.getElementById(
+          "alive-creatures"
+        ).textContent = `${aliveCount}/${creatures.length}`;
+
+        // Update progress
+        const progress = (tick / maxTicks) * 100;
+        document.getElementById(
+          "generation-progress"
+        ).style.width = `${progress}%`;
+        document.getElementById(
+          "progress-text"
+        ).textContent = `${tick}/${maxTicks} ticks`;
+
+        // Update best creature info
+        const bestCreature = creatures.reduce(
+          (best, current) => (current.fitness > best.fitness ? current : best),
+          creatures[0] || { fitness: 0, energy: 0, age: 0, x: 0, y: 0 }
+        );
+
+        if (bestCreature) {
+          document.getElementById("best-energy").textContent = Math.round(
+            bestCreature.energy
+          );
+          document.getElementById("best-age").textContent = bestCreature.age;
+          document.getElementById("best-position").textContent = `(${Math.round(
+            bestCreature.x
+          )}, ${Math.round(bestCreature.y)})`;
+          document.getElementById("best-fitness-detail").textContent =
+            bestCreature.fitness.toFixed(1);
+        }
+      }
+
+      // Event handlers
+      playBtn.addEventListener("click", () => {
+        isRunning = true;
+        isPaused = false;
+        playBtn.style.opacity = "0.5";
+        pauseBtn.style.opacity = "1";
+        logMessage("▶️ Simulation started");
+      });
+
+      pauseBtn.addEventListener("click", () => {
+        isPaused = true;
+        playBtn.style.opacity = "1";
+        pauseBtn.style.opacity = "0.5";
+        logMessage("⏸️ Simulation paused");
+      });
+
+      resetBtn.addEventListener("click", () => {
+        isRunning = false;
+        isPaused = false;
+        generation = 1;
+        resetSimulation();
+        playBtn.style.opacity = "1";
+        pauseBtn.style.opacity = "0.5";
+        logMessage("🔄 Simulation reset");
+      });
+
+      stepBtn.addEventListener("click", () => {
+        if (!isRunning) return;
+        updateSimulation();
+        logMessage("⏭️ Single step executed");
+      });
+
+      // Mode switching
+      document.querySelectorAll(".mode-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          currentMode = btn.dataset.mode;
+          document
+            .querySelectorAll(".mode-btn")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          logMessage(`🔄 Switched to ${currentMode} mode`);
+        });
+      });
+
+      // Control updates
+      document
+        .getElementById("population-size")
+        .addEventListener("input", (e) => {
+          document.getElementById("population-value").textContent =
+            e.target.value;
+        });
+
+      document
+        .getElementById("mutation-rate")
+        .addEventListener("input", (e) => {
+          document.getElementById("mutation-value").textContent =
+            e.target.value;
+        });
+
+      document
+        .getElementById("simulation-speed")
+        .addEventListener("input", (e) => {
+          document.getElementById("speed-value").textContent =
+            e.target.value + "x";
+        });
+
+      // Neural activity toggle
+      document
+        .getElementById("show-neural-activity")
+        .addEventListener("change", (e) => {
+          const neuralViz = document.getElementById("neural-viz");
+          neuralViz.style.display = e.target.checked ? "block" : "none";
+        });
+
+      // Fitness chart
+      function drawFitnessChart() {
+        const canvas = document.getElementById("fitness-chart");
+        const ctx = canvas.getContext("2d");
+
+        ctx.fillStyle = "#2d2d2d";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.strokeStyle = "#0078d4";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+
+        for (let i = 0; i < canvas.width; i += 10) {
+          const y = canvas.height - Math.random() * 60 - 20;
+          if (i === 0) ctx.moveTo(i, y);
+          else ctx.lineTo(i, y);
+        }
+
+        ctx.stroke();
+      }
+
+      // Log function
+      function logMessage(message) {
+        const logContent = document.getElementById("log-content");
+        const entry = document.createElement("div");
+        entry.className = "log-entry";
+        entry.innerHTML = `
+                <span class="log-time">${new Date().toLocaleTimeString()}</span>
+                <span class="log-message">${message}</span>
+            `;
+
+        logContent.appendChild(entry);
+        logContent.scrollTop = logContent.scrollHeight;
+
+        // Keep only last 20 entries
+        while (logContent.children.length > 20) {
+          logContent.removeChild(logContent.firstChild);
+        }
+      }
+
+      // Initialize
+      setTimeout(() => {
+        drawFitnessChart();
+        logMessage("🎯 Neural Evolution Simulator ready");
+      }, 500);
+
+      // Clear log
+      document.getElementById("clear-log").addEventListener("click", () => {
+        document.getElementById("log-content").innerHTML = "";
+      });
+    </script>
+  </body>
+</html>
