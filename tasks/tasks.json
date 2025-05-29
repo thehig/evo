@@ -400,7 +400,7 @@
       "id": 15,
       "title": "Implement Persistence System - World Snapshots",
       "description": "Extend the persistence system to handle complete world state snapshots.",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         7,
         13

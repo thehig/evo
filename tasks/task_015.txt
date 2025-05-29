@@ -1,6 +1,6 @@
 # Task ID: 15
 # Title: Implement Persistence System - World Snapshots
-# Status: pending
+# Status: done
 # Dependencies: 7, 13
 # Priority: medium
 # Description: Extend the persistence system to handle complete world state snapshots.
